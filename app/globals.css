@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+:root {
+  --tabacco: #2c2416;
+  --lino: #f0ebe0;
+  --cammello: #8b7355;
+  --sabbia: #d4c9b5;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: var(--lino);
+  color: var(--tabacco);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Navigation ─────────────────────────────────────── */
+
+.rs-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+}
+
+.rs-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* ── Alloggi grid ────────────────────────────────────── */
+
+.rs-alloggi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+}
+
+/* ── Dotazioni grid ──────────────────────────────────── */
+
+.rs-dotazioni-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem 2.5rem;
+}
+
+/* ── Prezzo layout ───────────────────────────────────── */
+
+.rs-prezzo-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+
+.rs-footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.rs-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ── Mobile ─────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .rs-nav-links {
+    display: none;
+  }
+
+  .rs-hamburger {
+    display: flex;
+  }
+
+  .rs-alloggi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rs-dotazioni-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .rs-prezzo-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rs-footer-top,
+  .rs-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
