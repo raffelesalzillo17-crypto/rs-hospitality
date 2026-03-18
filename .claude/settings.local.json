@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/Users/salzi/rs-hospitality/CHANGELOG.md\":*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

@@ -86,6 +86,34 @@ body {
   gap: 1rem;
 }
 
+/* ── Chi siamo grid ─────────────────────────────────── */
+
+.rs-chi-siamo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+/* ── Calendar grid ───────────────────────────────────── */
+
+.rs-calendar-months {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+/* ── WhatsApp button ─────────────────────────────────── */
+
+.rs-whatsapp-btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rs-whatsapp-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* ── Mobile ─────────────────────────────────────────── */
 
 @media (max-width: 768px) {
@@ -98,6 +126,15 @@ body {
   }
 
   .rs-alloggi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rs-chi-siamo-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .rs-calendar-months {
     grid-template-columns: 1fr;
   }
 

@@ -55,6 +55,70 @@ const dotazioni = [
   { label: "Riscaldamento",            path: "M12 2c-4 4-6 8-6 11a6 6 0 0 0 12 0c0-3-2-7-6-11zM9 15s1 2 3 2 3-2 3-2" },
 ];
 
+const MONTH_NAMES = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                     'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const DAY_LABELS = ['L','M','M','G','V','S','D'];
+
+function renderMonth(year: number, month: number, busyDates: {start: string; end: string}[]) {
+  const firstDayMon = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+
+  function pad(n: number) { return String(n).padStart(2, '0'); }
+  function dateStr(d: number) { return `${year}-${pad(month + 1)}-${pad(d)}`; }
+  function isBusy(d: number) {
+    const s = dateStr(d);
+    return busyDates.some(e => s >= e.start && s < e.end);
+  }
+  function isPast(d: number) { return new Date(year, month, d) < todayStart; }
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDayMon; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div key={`${year}-${month}`}>
+      <p style={{ color: "#2C2416", fontSize: "0.78rem", fontWeight: 400, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "0.85rem", textAlign: "center" }}>
+        {MONTH_NAMES[month]} {year}
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", marginBottom: "4px" }}>
+        {DAY_LABELS.map((d, i) => (
+          <div key={i} style={{ textAlign: "center", fontSize: "0.58rem", color: "#8B7355", letterSpacing: "0.04em", paddingBottom: "4px" }}>
+            {d}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px" }}>
+        {cells.map((day, i) => {
+          if (day === null) return <div key={i} />;
+          const past = isPast(day);
+          const busy = !past && isBusy(day);
+          const free = !past && !busy;
+          return (
+            <div
+              key={i}
+              style={{
+                textAlign: "center",
+                padding: "5px 2px",
+                fontSize: "0.7rem",
+                borderRadius: "2px",
+                backgroundColor: past ? "transparent" : busy ? "#c0392b" : "#2e7d52",
+                color: past ? "#8B7355" : "#fff",
+                opacity: past ? 0.4 : 1,
+                fontWeight: 300,
+              }}
+              aria-label={`${day} ${MONTH_NAMES[month]} ${year}: ${past ? "passato" : busy ? "occupato" : "libero"}`}
+            >
+              {day}
+            </div>
+          );
+          void free;
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function IlTulipano() {
   const [scrolled, setScrolled]   = useState(false);
   const [menuOpen, setMenuOpen]   = useState(false);
@@ -71,10 +135,20 @@ export default function IlTulipano() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  useEffect(() => {
+    fetch('/api/calendar')
+      .then(r => r.json())
+      .then(data => { setBusyDates(data.events ?? []); setCalLoading(false); })
+      .catch(() => setCalLoading(false));
+  }, []);
+
   const [descRef,    descInView]    = useInView();
   const [dotRef,     dotInView]     = useInView();
   const [prezzoRef,  prezzoInView]  = useInView();
   const [mappaRef,   mappaInView]   = useInView();
+  const [calRef,     calInView]     = useInView();
+  const [busyDates, setBusyDates] = useState<{start: string; end: string}[]>([]);
+  const [calLoading, setCalLoading] = useState(true);
 
   const navLinks = [
     { label: "Alloggi",   href: "/#alloggi" },
@@ -874,6 +948,65 @@ export default function IlTulipano() {
         </div>
       </section>
 
+      {/* ── CALENDARIO ──────────────────────────────────────────────────────── */}
+      <section
+        style={{
+          backgroundColor: "#F0EBE0",
+          padding: "clamp(3.5rem, 7vw, 6rem) clamp(1.25rem, 5vw, 2.5rem)",
+        }}
+      >
+        <div ref={calRef} style={{ maxWidth: 1100, margin: "0 auto", ...fade(calInView) }}>
+          <p
+            style={{
+              color: "#8B7355",
+              fontSize: "0.62rem",
+              letterSpacing: "0.35em",
+              textTransform: "uppercase",
+              marginBottom: "0.6rem",
+              opacity: 0.5,
+            }}
+          >
+            Verifica date
+          </p>
+          <h2
+            style={{
+              color: "#2C2416",
+              fontSize: "clamp(1.2rem, 2.5vw, 1.6rem)",
+              fontWeight: 300,
+              marginBottom: "2.5rem",
+            }}
+          >
+            Disponibilità
+          </h2>
+
+          {calLoading ? (
+            <p style={{ color: "#8B7355", fontSize: "0.82rem", fontWeight: 300 }}>
+              Caricamento calendario…
+            </p>
+          ) : (
+            <div className="rs-calendar-months">
+              {[0, 1].map((offset) => {
+                const d = new Date();
+                d.setDate(1);
+                d.setMonth(d.getMonth() + offset);
+                return renderMonth(d.getFullYear(), d.getMonth(), busyDates);
+              })}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "1.75rem", marginTop: "2rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div style={{ width: 12, height: 12, backgroundColor: "#c0392b", borderRadius: "2px", flexShrink: 0 }} />
+              <span style={{ color: "#2C2416", fontSize: "0.72rem", fontWeight: 300 }}>Occupato</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div style={{ width: 12, height: 12, backgroundColor: "#2e7d52", borderRadius: "2px", flexShrink: 0 }} />
+              <span style={{ color: "#2C2416", fontSize: "0.72rem", fontWeight: 300 }}>Libero</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── MAPPA ───────────────────────────────────────────────────────────── */}
       <section
         style={{
@@ -905,60 +1038,45 @@ export default function IlTulipano() {
             Via Clanio 60, Marcianise (CE)
           </h3>
 
-          <div
-            style={{
-              backgroundColor: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              height: 260,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "1.75rem",
-            }}
-          >
-            <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={c.cammello} strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-              <circle cx="12" cy="9" r="2.5" />
-            </svg>
-            <div style={{ textAlign: "center" }}>
-              <p
-                style={{
-                  color: c.sabbia,
-                  fontSize: "0.82rem",
-                  letterSpacing: "0.04em",
-                  marginBottom: "1.25rem",
-                  fontWeight: 300,
-                }}
-              >
-                Via Clanio 60 · Marcianise · CE
-              </p>
-              <a
-                href="https://maps.google.com/?q=Via+Clanio+60,+Marcianise+CE"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: c.cammello,
-                  textDecoration: "none",
-                  fontSize: "0.68rem",
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  border: `1px solid ${c.cammello}`,
-                  padding: "0.65rem 1.6rem",
-                  transition: "background-color 0.25s, color 0.25s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = c.cammello;
-                  e.currentTarget.style.color = c.lino;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = c.cammello;
-                }}
-              >
-                Apri in Google Maps →
-              </a>
-            </div>
+          <div style={{ overflow: "hidden" }}>
+            <iframe
+              src="https://maps.google.com/maps?q=Via+Clanio+60,+Marcianise+CE&output=embed&z=16"
+              width="100%"
+              height="380"
+              style={{ border: 0, display: "block" }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Via Clanio 60, Marcianise CE"
+            />
+          </div>
+          <div style={{ marginTop: "1.25rem" }}>
+            <a
+              href="https://maps.google.com/?q=Via+Clanio+60,+Marcianise+CE"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                color: c.cammello,
+                textDecoration: "none",
+                fontSize: "0.68rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                border: `1px solid ${c.cammello}`,
+                padding: "0.65rem 1.6rem",
+                transition: "background-color 0.25s, color 0.25s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = c.cammello;
+                e.currentTarget.style.color = c.lino;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = c.cammello;
+              }}
+            >
+              Apri in Google Maps →
+            </a>
           </div>
         </div>
       </section>

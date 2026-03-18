@@ -41,19 +41,7 @@ const alloggi = [
     prezzo: "da €55 / notte",
     imgSrc: "/images/tulipano/dettaglio letto.png",
     href: "/alloggi/il-tulipano",
-    textLight: false,
     delay: 0.1,
-  },
-  {
-    categoria: "RS Superior",
-    nome: "Appartamento Superior",
-    desc: "Arredi selezionati, finiture curate, un'esperienza sopra la media.",
-    prezzo: "da €95 / notte",
-    imgSrc: null,
-    bg: "linear-gradient(150deg, #3d3020 0%, #2C2416 100%)",
-    href: "#",
-    textLight: true,
-    delay: 0.22,
   },
 ];
 
@@ -74,11 +62,12 @@ export default function Home() {
   }, [menuOpen]);
 
   const [alloggiRef, alloggiInView] = useInView();
+  const [chiSiamoRef, chiSiamoInView] = useInView();
   const [propRef, propInView] = useInView();
 
   const navLinks = [
     { label: "Alloggi", href: "#alloggi" },
-    { label: "Chi siamo", href: "#proprietari" },
+    { label: "Chi siamo", href: "#chi-siamo" },
     { label: "Contatti", href: "#footer" },
   ];
 
@@ -456,6 +445,128 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CHI SIAMO ───────────────────────────────────────────────────────── */}
+      <section
+        id="chi-siamo"
+        style={{
+          backgroundColor: c.tabacco,
+          padding: "clamp(4rem, 8vw, 7rem) clamp(1.25rem, 5vw, 2.5rem)",
+        }}
+      >
+        <div
+          ref={chiSiamoRef}
+          style={{ maxWidth: 1100, margin: "0 auto", ...fade(chiSiamoInView) }}
+        >
+          <p
+            style={{
+              color: c.cammello,
+              fontSize: "0.68rem",
+              letterSpacing: "0.35em",
+              textTransform: "uppercase",
+              marginBottom: "0.8rem",
+            }}
+          >
+            La nostra storia
+          </p>
+          <h2
+            style={{
+              color: c.lino,
+              fontSize: "clamp(1.5rem, 3vw, 2rem)",
+              fontWeight: 300,
+              letterSpacing: "0.01em",
+              marginBottom: "3rem",
+            }}
+          >
+            Chi siamo
+          </h2>
+
+          <div className="rs-chi-siamo-grid">
+            <div>
+              <p
+                style={{
+                  color: c.sabbia,
+                  fontSize: "clamp(1rem, 2.2vw, 1.15rem)",
+                  fontWeight: 300,
+                  lineHeight: 1.9,
+                  letterSpacing: "0.01em",
+                  marginBottom: "1.5rem",
+                }}
+              >
+                Sono Raffaele, un ragazzo di Marcianise. Ho iniziato con gli affitti
+                brevi quasi per gioco — un appartamento, qualche curiosità, voglia
+                di provare.
+              </p>
+              <p
+                style={{
+                  color: c.sabbia,
+                  fontSize: "clamp(1rem, 2.2vw, 1.15rem)",
+                  fontWeight: 300,
+                  lineHeight: 1.9,
+                  letterSpacing: "0.01em",
+                  opacity: 0.72,
+                }}
+              >
+                Poi le cose hanno cominciato a diventare serie. RS Hospitality è
+                il modo in cui metto cura e attenzione in ogni soggiorno. Una firma
+                personale su ogni dettaglio.
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "2.5rem",
+              }}
+            >
+              <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.08)" }} />
+              <div>
+                <p
+                  style={{
+                    color: c.lino,
+                    fontSize: "0.88rem",
+                    fontWeight: 400,
+                    letterSpacing: "0.04em",
+                    marginBottom: "0.3rem",
+                  }}
+                >
+                  Raffaele Salzillo
+                </p>
+                <p
+                  style={{
+                    color: c.cammello,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.06em",
+                    fontWeight: 300,
+                  }}
+                >
+                  Fondatore · Marcianise
+                </p>
+              </div>
+              <a
+                href="/chi-siamo"
+                style={{
+                  color: c.cammello,
+                  textDecoration: "none",
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  borderBottom: `1px solid ${c.cammello}`,
+                  paddingBottom: "2px",
+                  alignSelf: "flex-start",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = c.lino; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = c.cammello; }}
+              >
+                Leggi di più →
+              </a>
+            </div>
           </div>
         </div>
       </section>
