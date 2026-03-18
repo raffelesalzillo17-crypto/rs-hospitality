@@ -336,37 +336,13 @@ export default function Home() {
                 }}
               >
                 {/* Photo */}
-                {a.imgSrc ? (
-                  <div style={{ height: 240, flexShrink: 0, overflow: "hidden" }}>
-                    <img
-                      src={a.imgSrc}
-                      alt={a.nome}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      background: a.bg,
-                      height: 240,
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "flex-end",
-                      padding: "1rem 1.25rem",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: a.textLight ? "rgba(240,235,224,0.5)" : "rgba(44,36,22,0.35)",
-                        fontSize: "0.6rem",
-                        letterSpacing: "0.2em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Foto in arrivo
-                    </span>
-                  </div>
-                )}
+                <div style={{ height: 240, flexShrink: 0, overflow: "hidden" }}>
+                  <img
+                    src={a.imgSrc}
+                    alt={a.nome}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+                  />
+                </div>
 
                 {/* Card body */}
                 <div style={{ padding: "2rem 2rem 1.75rem", display: "flex", flexDirection: "column", gap: "0.75rem", flexGrow: 1 }}>
