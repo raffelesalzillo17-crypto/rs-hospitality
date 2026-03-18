@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 const c = {
   tabacco: "#2C2416",
@@ -109,12 +110,17 @@ export default function Home() {
             {link.label}
           </a>
         ))}
-        <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
           <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
             +39 366 103 3691
           </a>
-          <a href="mailto:info@rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.8rem" }}>
-            info@rshospitality.it
+          <a
+            href="https://wa.me/393661033691"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.75rem", letterSpacing: "0.06em" }}
+          >
+            WhatsApp
           </a>
         </div>
       </div>
@@ -327,30 +333,28 @@ export default function Home() {
             {alloggi.map((a) => (
               <div
                 key={a.categoria}
-                style={{
-                  backgroundColor: c.lino,
-                  border: `1px solid ${c.sabbia}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  ...fade(alloggiInView, a.delay),
-                }}
+                className="rs-alloggio-card"
+                style={{ ...fade(alloggiInView, a.delay) }}
               >
                 {/* Photo */}
-                <div style={{ height: 240, flexShrink: 0, overflow: "hidden" }}>
-                  <img
+                <div className="rs-alloggio-card-photo">
+                  <Image
                     src={a.imgSrc}
                     alt={a.nome}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+                    fill
+                    style={{ objectFit: "cover", objectPosition: "center" }}
+                    sizes="(max-width: 768px) 100vw, 58vw"
+                    priority
                   />
                 </div>
 
                 {/* Card body */}
-                <div style={{ padding: "2rem 2rem 1.75rem", display: "flex", flexDirection: "column", gap: "0.75rem", flexGrow: 1 }}>
+                <div className="rs-alloggio-card-body">
                   <p
                     style={{
                       color: c.cammello,
-                      fontSize: "0.62rem",
-                      letterSpacing: "0.28em",
+                      fontSize: "0.6rem",
+                      letterSpacing: "0.35em",
                       textTransform: "uppercase",
                     }}
                   >
@@ -359,9 +363,10 @@ export default function Home() {
                   <h3
                     style={{
                       color: c.tabacco,
-                      fontSize: "1.15rem",
-                      fontWeight: 400,
-                      letterSpacing: "0.01em",
+                      fontSize: "clamp(2rem, 4vw, 2.8rem)",
+                      fontWeight: 300,
+                      letterSpacing: "-0.01em",
+                      lineHeight: 1.1,
                     }}
                   >
                     {a.nome}
@@ -369,53 +374,49 @@ export default function Home() {
                   <p
                     style={{
                       color: c.tabacco,
-                      fontSize: "0.85rem",
+                      fontSize: "clamp(0.88rem, 1.8vw, 0.95rem)",
                       fontWeight: 300,
-                      lineHeight: 1.75,
-                      opacity: 0.7,
+                      lineHeight: 1.85,
+                      opacity: 0.68,
+                      maxWidth: 400,
                     }}
                   >
                     {a.desc}
                   </p>
 
-                  {/* Price + CTA */}
-                  <div
+                  <div style={{ height: 1, backgroundColor: c.sabbia, margin: "0.5rem 0" }} />
+
+                  <span
                     style={{
-                      marginTop: "auto",
-                      paddingTop: "1.25rem",
-                      borderTop: `1px solid ${c.sabbia}`,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      color: c.tabacco,
+                      fontSize: "1.05rem",
+                      fontWeight: 400,
+                      letterSpacing: "0.01em",
                     }}
                   >
-                    <span
-                      style={{
-                        color: c.tabacco,
-                        fontSize: "0.9rem",
-                        fontWeight: 400,
-                        letterSpacing: "0.02em",
-                      }}
-                    >
-                      {a.prezzo}
-                    </span>
+                    {a.prezzo}
+                  </span>
+
+                  <div style={{ marginTop: "0.5rem" }}>
                     <a
                       href={a.href}
                       style={{
-                        color: c.cammello,
-                        textDecoration: "none",
-                        fontSize: "0.72rem",
-                        letterSpacing: "0.15em",
-                        textTransform: "uppercase",
-                        transition: "color 0.2s",
-                        display: "flex",
+                        display: "inline-flex",
                         alignItems: "center",
-                        gap: "0.4rem",
+                        gap: "0.5rem",
+                        backgroundColor: c.cammello,
+                        color: c.lino,
+                        textDecoration: "none",
+                        fontSize: "0.68rem",
+                        letterSpacing: "0.22em",
+                        textTransform: "uppercase",
+                        padding: "0.9rem 2rem",
+                        transition: "background-color 0.25s",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = c.tabacco; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = c.cammello; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = c.tabacco; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = c.cammello; }}
                     >
-                      Scopri <span style={{ fontSize: "0.9rem" }}>→</span>
+                      Scopri l&apos;alloggio →
                     </a>
                   </div>
                 </div>
@@ -430,77 +431,62 @@ export default function Home() {
         id="chi-siamo"
         style={{
           backgroundColor: c.tabacco,
-          padding: "clamp(4rem, 8vw, 7rem) clamp(1.25rem, 5vw, 2.5rem)",
+          padding: "clamp(5rem, 10vw, 9rem) clamp(1.25rem, 5vw, 2.5rem)",
         }}
       >
         <div
           ref={chiSiamoRef}
           style={{ maxWidth: 1100, margin: "0 auto", ...fade(chiSiamoInView) }}
         >
-          <p
-            style={{
-              color: c.cammello,
-              fontSize: "0.68rem",
-              letterSpacing: "0.35em",
-              textTransform: "uppercase",
-              marginBottom: "0.8rem",
-            }}
-          >
-            La nostra storia
-          </p>
-          <h2
-            style={{
-              color: c.lino,
-              fontSize: "clamp(1.5rem, 3vw, 2rem)",
-              fontWeight: 300,
-              letterSpacing: "0.01em",
-              marginBottom: "3rem",
-            }}
-          >
-            Chi siamo
-          </h2>
+          <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.07)", marginBottom: "3.5rem" }} />
 
-          <div className="rs-chi-siamo-grid">
-            <div>
-              <p
-                style={{
-                  color: c.sabbia,
-                  fontSize: "clamp(1rem, 2.2vw, 1.15rem)",
-                  fontWeight: 300,
-                  lineHeight: 1.9,
-                  letterSpacing: "0.01em",
-                  marginBottom: "1.5rem",
-                }}
-              >
-                Sono Raffaele, un ragazzo di Marcianise. Ho iniziato con gli affitti
-                brevi quasi per gioco — un appartamento, qualche curiosità, voglia
-                di provare.
-              </p>
-              <p
-                style={{
-                  color: c.sabbia,
-                  fontSize: "clamp(1rem, 2.2vw, 1.15rem)",
-                  fontWeight: 300,
-                  lineHeight: 1.9,
-                  letterSpacing: "0.01em",
-                  opacity: 0.72,
-                }}
-              >
-                Poi le cose hanno cominciato a diventare serie. RS Hospitality è
-                il modo in cui metto cura e attenzione in ogni soggiorno. Una firma
-                personale su ogni dettaglio.
-              </p>
-            </div>
-
+          <div style={{ maxWidth: 680 }}>
+            {/* Decorative quote mark */}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                gap: "2.5rem",
+                color: c.cammello,
+                fontSize: "5rem",
+                lineHeight: 0.75,
+                fontWeight: 300,
+                marginBottom: "2.25rem",
+                opacity: 0.4,
+                userSelect: "none",
               }}
             >
-              <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.08)" }} />
+              &ldquo;
+            </div>
+
+            <p
+              style={{
+                color: c.sabbia,
+                fontSize: "clamp(1.05rem, 2.4vw, 1.22rem)",
+                fontWeight: 300,
+                lineHeight: 1.95,
+                letterSpacing: "0.01em",
+                marginBottom: "1.75rem",
+              }}
+            >
+              Sono Raffaele, un ragazzo di Marcianise. Ho iniziato con gli affitti
+              brevi quasi per gioco — un appartamento, qualche curiosità, voglia
+              di provare.
+            </p>
+            <p
+              style={{
+                color: c.sabbia,
+                fontSize: "clamp(1rem, 2.2vw, 1.15rem)",
+                fontWeight: 300,
+                lineHeight: 1.95,
+                letterSpacing: "0.01em",
+                opacity: 0.65,
+                marginBottom: "3rem",
+              }}
+            >
+              Poi le cose hanno cominciato a diventare serie. RS Hospitality è
+              il modo in cui metto cura e attenzione in ogni soggiorno. Una firma
+              personale su ogni dettaglio.
+            </p>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1.5rem" }}>
               <div>
                 <p
                   style={{
@@ -508,7 +494,7 @@ export default function Home() {
                     fontSize: "0.88rem",
                     fontWeight: 400,
                     letterSpacing: "0.04em",
-                    marginBottom: "0.3rem",
+                    marginBottom: "0.25rem",
                   }}
                 >
                   Raffaele Salzillo
@@ -516,12 +502,12 @@ export default function Home() {
                 <p
                   style={{
                     color: c.cammello,
-                    fontSize: "0.72rem",
-                    letterSpacing: "0.06em",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
                     fontWeight: 300,
                   }}
                 >
-                  Fondatore · Marcianise
+                  Fondatore · RS Hospitality
                 </p>
               </div>
               <a
@@ -534,8 +520,8 @@ export default function Home() {
                   textTransform: "uppercase",
                   borderBottom: `1px solid ${c.cammello}`,
                   paddingBottom: "2px",
-                  alignSelf: "flex-start",
                   transition: "color 0.2s",
+                  flexShrink: 0,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = c.lino; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = c.cammello; }}
@@ -544,6 +530,8 @@ export default function Home() {
               </a>
             </div>
           </div>
+
+          <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.07)", marginTop: "3.5rem" }} />
         </div>
       </section>
 
@@ -644,11 +632,16 @@ export default function Home() {
               <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
                 rshospitality.it
               </a>
-              <a href="mailto:info@rshospitality.it" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem" }}>
-                info@rshospitality.it
-              </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
+              </a>
+              <a
+                href="https://wa.me/393661033691"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}
+              >
+                WhatsApp
               </a>
             </div>
           </div>

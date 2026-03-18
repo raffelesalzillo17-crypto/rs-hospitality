@@ -4,6 +4,34 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-18 (aggiornamento 2)
+
+### Design
+- **Card Il Tulipano (homepage)**: layout orizzontale foto/testo (58%/42%), altezza foto 480px su desktop, 300px su mobile — molto più impattante del precedente formato verticale
+- **Sezione Chi siamo**: rimosso layout a due colonne corporate; ora testo centrato con virgolette decorative, firma personale e tono più caldo; sezione con più spazio verticale
+- **Pagina `/chi-siamo`**: hero allineato a sinistra con tagline, testo ampliato con tre paragrafi personali, virgolette decorative
+
+### SEO
+- `layout.tsx`: aggiunto `metadataBase`, `title.template`, og:title, og:description, og:image (Foto letto ampia.png), og:url, twitter:card
+- Pagina `/alloggi/il-tulipano`: `document.title` impostato via `useEffect`
+- Pagina `/chi-siamo`: `document.title` impostato via `useEffect`
+
+### Performance
+- Sostituiti `<img>` con `<Image>` (next/image) per: hero di Il Tulipano (con `fill` e `priority`), foto card homepage (con `fill` e `priority`), thumbnails galleria (con `width={80}` `height={54}`)
+- Logo: `<Image>` con `height={68}` per prevenire layout shift
+- Gallery main image: attributi `width={1200}` `height={675}` aggiunti per prevenzione CLS
+
+### Footer e contatti
+- Rimossa email `info@rshospitality.it` da footer, overlay mobile e tutte le pagine
+- Aggiunto link WhatsApp (`wa.me/393661033691`) in footer e overlay mobile su tutte le pagine
+- Mantenuti: dominio `rshospitality.it` e telefono `+39 366 103 3691`
+
+### Mappa
+- Altezza iframe mappa aumentata da 380px a 420px
+- Aggiunto `backgroundColor: c.sabbia` al container della mappa per evitare flash bianco durante il caricamento
+
+---
+
 ## [Unreleased] — 2026-03-18
 
 ### Aggiunto

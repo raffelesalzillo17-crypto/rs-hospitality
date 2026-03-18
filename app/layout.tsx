@@ -2,9 +2,37 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RS Hospitality — Property Management a Marcianise",
+  metadataBase: new URL("https://rshospitality.it"),
+  title: {
+    default: "RS Hospitality — Alloggi a Marcianise, Caserta",
+    template: "%s | RS Hospitality",
+  },
   description:
-    "RS Hospitality gestisce appartamenti di qualità a Marcianise, Italia. Due categorie: RS Comfort e RS Superior.",
+    "Alloggi curati nel cuore di Marcianise, Caserta. Il Tulipano: camera matrimoniale con bagno privato esclusivo, da €55 a notte. Prenota su Booking.com o Airbnb.",
+  openGraph: {
+    title: "RS Hospitality — Alloggi a Marcianise",
+    description:
+      "Alloggi curati nel cuore di Marcianise, Caserta. Il Tulipano: camera matrimoniale con bagno privato, da €55 a notte.",
+    url: "https://rshospitality.it",
+    siteName: "RS Hospitality",
+    locale: "it_IT",
+    type: "website",
+    images: [
+      {
+        url: "/images/tulipano/Foto letto ampia.png",
+        width: 1200,
+        height: 630,
+        alt: "Il Tulipano — RS Hospitality",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RS Hospitality — Alloggi a Marcianise",
+    description:
+      "Camera matrimoniale con bagno privato a Marcianise, Caserta. Da €55 a notte.",
+    images: ["/images/tulipano/Foto letto ampia.png"],
+  },
 };
 
 export default function RootLayout({

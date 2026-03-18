@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 const c = {
   tabacco: "#2C2416",
@@ -136,6 +137,10 @@ export default function IlTulipano() {
   }, [menuOpen]);
 
   useEffect(() => {
+    document.title = "Il Tulipano — Camera matrimoniale a Marcianise | RS Hospitality";
+  }, []);
+
+  useEffect(() => {
     fetch('/api/calendar')
       .then(r => r.json())
       .then(data => { setBusyDates(data.events ?? []); setCalLoading(false); })
@@ -197,12 +202,17 @@ export default function IlTulipano() {
             {link.label}
           </a>
         ))}
-        <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
           <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
             +39 366 103 3691
           </a>
-          <a href="mailto:info@rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.8rem" }}>
-            info@rshospitality.it
+          <a
+            href="https://wa.me/393661033691"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.75rem", letterSpacing: "0.06em" }}
+          >
+            WhatsApp
           </a>
         </div>
       </div>
@@ -303,17 +313,13 @@ export default function IlTulipano() {
         }}
       >
         {/* Background photo */}
-        <img
+        <Image
           src="/images/tulipano/dettaglio letto.png"
-          alt="Il Tulipano"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center",
-          }}
+          alt="Il Tulipano — camera matrimoniale"
+          fill
+          style={{ objectFit: "cover", objectPosition: "center" }}
+          sizes="100vw"
+          priority
         />
         {/* Overlay */}
         <div
@@ -429,6 +435,8 @@ export default function IlTulipano() {
               key={activeImg}
               src={gallery[activeImg].src}
               alt={gallery[activeImg].alt}
+              width={1200}
+              height={675}
               style={{
                 width: "100%",
                 height: "100%",
@@ -529,9 +537,11 @@ export default function IlTulipano() {
                   background: "none",
                 }}
               >
-                <img
+                <Image
                   src={img.src}
                   alt={img.alt}
+                  width={80}
+                  height={54}
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
               </button>
@@ -559,9 +569,11 @@ export default function IlTulipano() {
               marginBottom: "3rem",
             }}
           >
-            <img
+            <Image
               src="/images/tulipano/Logo.png"
               alt="Logo Il Tulipano"
+              height={68}
+              width={120}
               style={{ height: 68, width: "auto", objectFit: "contain", opacity: 0.82 }}
             />
             <div>
@@ -1038,11 +1050,11 @@ export default function IlTulipano() {
             Via Clanio 60, Marcianise (CE)
           </h3>
 
-          <div style={{ overflow: "hidden" }}>
+          <div style={{ overflow: "hidden", backgroundColor: c.sabbia }}>
             <iframe
               src="https://maps.google.com/maps?q=Via+Clanio+60,+Marcianise+CE&output=embed&z=16"
               width="100%"
-              height="380"
+              height="420"
               style={{ border: 0, display: "block" }}
               allowFullScreen
               loading="lazy"
@@ -1104,11 +1116,16 @@ export default function IlTulipano() {
               <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
                 rshospitality.it
               </a>
-              <a href="mailto:info@rshospitality.it" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem" }}>
-                info@rshospitality.it
-              </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
+              </a>
+              <a
+                href="https://wa.me/393661033691"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}
+              >
+                WhatsApp
               </a>
             </div>
           </div>

@@ -36,6 +36,10 @@ export default function ChiSiamo() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    document.title = "Chi siamo | RS Hospitality";
+  }, []);
+
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -93,12 +97,17 @@ export default function ChiSiamo() {
             {link.label}
           </a>
         ))}
-        <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
           <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
             +39 366 103 3691
           </a>
-          <a href="mailto:info@rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.8rem" }}>
-            info@rshospitality.it
+          <a
+            href="https://wa.me/393661033691"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.75rem", letterSpacing: "0.06em" }}
+          >
+            WhatsApp
           </a>
         </div>
       </div>
@@ -193,39 +202,40 @@ export default function ChiSiamo() {
       <section
         style={{
           backgroundColor: c.tabacco,
-          minHeight: "60svh",
+          minHeight: "58svh",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "8rem clamp(1.25rem, 5vw, 2rem) 5rem",
-          textAlign: "center",
+          alignItems: "flex-start",
+          justifyContent: "flex-end",
+          padding: "8rem clamp(1.25rem, 5vw, 2.5rem) 4rem",
         }}
       >
-        <div ref={heroRef} style={{ ...fade(heroInView, 0.1) }}>
-          <p
-            style={{
-              color: c.cammello,
-              fontSize: "0.68rem",
-              letterSpacing: "0.4em",
-              textTransform: "uppercase",
-              marginBottom: "2rem",
-            }}
-          >
-            RS Hospitality
-          </p>
-          <h1
-            style={{
-              color: c.lino,
-              fontSize: "clamp(2rem, 5vw, 3.8rem)",
-              fontWeight: 300,
-              lineHeight: 1.15,
-              letterSpacing: "-0.01em",
-              maxWidth: 700,
-            }}
-          >
-            Chi siamo
-          </h1>
+        <div style={{ maxWidth: 1100, width: "100%", margin: "0 auto" }}>
+          <div ref={heroRef} style={{ ...fade(heroInView, 0.1) }}>
+            <p
+              style={{
+                color: c.cammello,
+                fontSize: "0.68rem",
+                letterSpacing: "0.4em",
+                textTransform: "uppercase",
+                marginBottom: "1.5rem",
+              }}
+            >
+              RS Hospitality · Marcianise
+            </p>
+            <h1
+              style={{
+                color: c.lino,
+                fontSize: "clamp(2.2rem, 6vw, 4.5rem)",
+                fontWeight: 300,
+                lineHeight: 1.1,
+                letterSpacing: "-0.01em",
+                maxWidth: 700,
+              }}
+            >
+              Chi siamo
+            </h1>
+          </div>
         </div>
       </section>
 
@@ -233,35 +243,38 @@ export default function ChiSiamo() {
       <section
         style={{
           backgroundColor: c.lino,
-          padding: "clamp(5rem, 10vw, 8rem) clamp(1.25rem, 5vw, 2.5rem)",
+          padding: "clamp(5rem, 10vw, 9rem) clamp(1.25rem, 5vw, 2.5rem)",
         }}
       >
         <div
           ref={textRef}
           style={{
-            maxWidth: 680,
+            maxWidth: 700,
             margin: "0 auto",
             ...fade(textInView),
           }}
         >
-          <p
+          {/* Decorative quote mark */}
+          <div
             style={{
               color: c.cammello,
-              fontSize: "0.65rem",
-              letterSpacing: "0.38em",
-              textTransform: "uppercase",
+              fontSize: "5rem",
+              lineHeight: 0.75,
+              fontWeight: 300,
               marginBottom: "2.5rem",
+              opacity: 0.3,
+              userSelect: "none",
             }}
           >
-            La nostra storia
-          </p>
+            &ldquo;
+          </div>
 
           <p
             style={{
               color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.2rem)",
+              fontSize: "clamp(1.1rem, 2.4vw, 1.25rem)",
               fontWeight: 300,
-              lineHeight: 1.9,
+              lineHeight: 1.95,
               letterSpacing: "0.01em",
               marginBottom: "1.75rem",
             }}
@@ -274,26 +287,43 @@ export default function ChiSiamo() {
           <p
             style={{
               color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.2rem)",
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
               fontWeight: 300,
-              lineHeight: 1.9,
+              lineHeight: 1.95,
               letterSpacing: "0.01em",
-              opacity: 0.78,
-              marginBottom: "3.5rem",
+              opacity: 0.72,
+              marginBottom: "1.75rem",
             }}
           >
-            Poi le cose hanno cominciato a diventare serie. RS Hospitality è
-            il modo in cui metto cura e attenzione in ogni soggiorno. Una firma
-            personale su ogni dettaglio.
+            Poi le cose hanno cominciato a diventare serie. Ho capito che c&rsquo;era
+            un modo di fare ospitalità che si poteva fare meglio — con più
+            cura, più attenzione ai dettagli, più rispetto per chi arriva dopo
+            una giornata di viaggio.
           </p>
 
-          <div style={{ height: 1, backgroundColor: c.sabbia, marginBottom: "3.5rem" }} />
+          <p
+            style={{
+              color: c.tabacco,
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              fontWeight: 300,
+              lineHeight: 1.95,
+              letterSpacing: "0.01em",
+              opacity: 0.68,
+              marginBottom: "4rem",
+            }}
+          >
+            RS Hospitality è il risultato di quell&rsquo;idea. Una firma personale
+            su ogni soggiorno — ogni dettaglio pensato, ogni spazio curato.
+            Non una catena, non un algoritmo. Solo la cura che ci metto io.
+          </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <div style={{ height: 1, backgroundColor: c.sabbia, marginBottom: "3rem" }} />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
             <span
               style={{
                 color: c.tabacco,
-                fontSize: "0.82rem",
+                fontSize: "0.88rem",
                 fontWeight: 400,
                 letterSpacing: "0.04em",
               }}
@@ -304,7 +334,7 @@ export default function ChiSiamo() {
               style={{
                 color: c.cammello,
                 fontSize: "0.72rem",
-                letterSpacing: "0.06em",
+                letterSpacing: "0.08em",
                 fontWeight: 300,
               }}
             >
@@ -335,11 +365,19 @@ export default function ChiSiamo() {
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-              <a href="mailto:info@rshospitality.it" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem" }}>
-                info@rshospitality.it
+              <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
+                rshospitality.it
               </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
+              </a>
+              <a
+                href="https://wa.me/393661033691"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}
+              >
+                WhatsApp
               </a>
             </div>
           </div>

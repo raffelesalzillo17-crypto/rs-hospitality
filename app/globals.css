@@ -48,9 +48,34 @@ body {
 /* ── Alloggi grid ────────────────────────────────────── */
 
 .rs-alloggi-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 2px;
+}
+
+/* ── Alloggio card (horizontal layout) ───────────────── */
+
+.rs-alloggio-card {
+  display: flex;
+  flex-direction: row;
+  border: 1px solid var(--sabbia);
+  overflow: hidden;
+}
+
+.rs-alloggio-card-photo {
+  position: relative;
+  flex: 0 0 58%;
+  min-height: 480px;
+  overflow: hidden;
+}
+
+.rs-alloggio-card-body {
+  flex: 1;
+  padding: clamp(2rem, 4vw, 3.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  justify-content: center;
 }
 
 /* ── Dotazioni grid ──────────────────────────────────── */
@@ -125,8 +150,14 @@ body {
     display: flex;
   }
 
-  .rs-alloggi-grid {
-    grid-template-columns: 1fr;
+  .rs-alloggio-card {
+    flex-direction: column;
+  }
+
+  .rs-alloggio-card-photo {
+    flex: none;
+    width: 100%;
+    min-height: 300px;
   }
 
   .rs-chi-siamo-grid {
