@@ -137,7 +137,40 @@ export default function IlTulipano() {
   }, [menuOpen]);
 
   useEffect(() => {
-    document.title = "Il Tulipano — Camera matrimoniale a Marcianise | RS Hospitality";
+    document.title = "Il Tulipano — Camera matrimoniale affitti brevi Marcianise, Caserta | RS Hospitality";
+
+    const ldJson = {
+      "@context": "https://schema.org",
+      "@type": "LodgingBusiness",
+      name: "Il Tulipano — RS Hospitality",
+      description: "Camera matrimoniale con bagno privato ad uso esclusivo a Marcianise (CE). Affitti brevi vicino Caserta, da €55 a notte.",
+      url: "https://rshospitality.it/alloggi/il-tulipano",
+      telephone: "+393661033691",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "Via Clanio 60",
+        addressLocality: "Marcianise",
+        addressRegion: "CE",
+        postalCode: "81025",
+        addressCountry: "IT",
+      },
+      priceRange: "€55–€80",
+      image: "https://rshospitality.it/images/tulipano/Foto letto ampia.png",
+      amenityFeature: [
+        { "@type": "LocationFeatureSpecification", name: "Wi-Fi gratuito", value: true },
+        { "@type": "LocationFeatureSpecification", name: "Bagno privato esclusivo", value: true },
+        { "@type": "LocationFeatureSpecification", name: "Letto matrimoniale", value: true },
+      ],
+    };
+    let script = document.getElementById("ld-lodging") as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = "ld-lodging";
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(ldJson);
+    return () => { script?.remove(); };
   }, []);
 
   useEffect(() => {
@@ -345,11 +378,12 @@ export default function IlTulipano() {
         >
           <p
             style={{
-              color: c.cammello,
+              color: c.lino,
               fontSize: "0.65rem",
               letterSpacing: "0.4em",
               textTransform: "uppercase",
               marginBottom: "1.75rem",
+              textShadow: "0 1px 6px rgba(0,0,0,0.65)",
             }}
           >
             RS Comfort · Via Clanio 60, Marcianise
@@ -625,8 +659,8 @@ export default function IlTulipano() {
               marginBottom: "1.5rem",
             }}
           >
-            Camera matrimoniale con bagno privato in appartamento condiviso.
-            Un ambiente curato, essenziale nel tono, generoso nello spazio.
+            Camera matrimoniale con bagno privato ad uso esclusivo, in un
+            appartamento nel centro di Marcianise.
           </p>
           <p
             style={{
@@ -638,10 +672,9 @@ export default function IlTulipano() {
               opacity: 0.68,
             }}
           >
-            Il soggiorno e la cucina sono condivisi con gli altri ospiti dell&rsquo;appartamento,
-            in un clima sereno e familiare. Il bagno, riservato esclusivamente alla camera,
-            garantisce la riservatezza che ti aspetti.
-            Su richiesta è disponibile un lettino supplementare a €20 a notte.
+            Cucina e soggiorno condivisi con gli altri ospiti, in un ambiente
+            ordinato e silenzioso. Il bagno è riservato esclusivamente a questa
+            camera. Pulizie incluse. Lettino aggiuntivo su richiesta, a €20 a notte.
           </p>
 
         </div>
@@ -751,6 +784,7 @@ export default function IlTulipano() {
                 Tariffe
               </p>
 
+              {/* Tariffa principale */}
               <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
                 <span
                   style={{
@@ -767,69 +801,141 @@ export default function IlTulipano() {
                 </span>
               </div>
 
+              {/* Griglia stagionale */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: "1px",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                }}
+              >
+                {[
+                  { label: "Bassa stagione", price: "€55", note: "lun–gio" },
+                  { label: "Alta stagione", price: "€70", note: "estate/feste" },
+                  { label: "Weekend", price: "€80", note: "ven–dom" },
+                ].map((t) => (
+                  <div
+                    key={t.label}
+                    style={{
+                      backgroundColor: c.tabacco,
+                      padding: "0.85rem 0.75rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    <p style={{ color: c.cammello, fontSize: "0.55rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.35rem" }}>
+                      {t.label}
+                    </p>
+                    <p style={{ color: c.lino, fontSize: "1rem", fontWeight: 300 }}>{t.price}</p>
+                    <p style={{ color: "rgba(212,201,181,0.45)", fontSize: "0.55rem", marginTop: "0.2rem" }}>{t.note}</p>
+                  </div>
+                ))}
+              </div>
+
               <p
                 style={{
                   color: c.sabbia,
-                  fontSize: "0.75rem",
+                  fontSize: "0.72rem",
                   fontWeight: 300,
                   lineHeight: 1.65,
                   opacity: 0.7,
                 }}
               >
-                Tariffa dinamica fino a €80 / notte.<br />
                 Lettino aggiuntivo disponibile a €20 / notte.
               </p>
 
               <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.07)" }} />
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                <a
-                  href="https://www.booking.com/Share-KLD1dK0"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "#003580",
-                    color: "#fff",
-                    textDecoration: "none",
-                    fontSize: "0.7rem",
-                    letterSpacing: "0.15em",
-                    textTransform: "uppercase",
-                    padding: "1rem 1.5rem",
-                    transition: "opacity 0.2s",
-                    fontWeight: 400,
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.82"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                >
-                  Prenota su Booking.com
-                </a>
+              {/* CTA prenotazione diretta WhatsApp */}
+              <a
+                href="https://wa.me/393661033691?text=Ciao%2C%20vorrei%20prenotare%20Il%20Tulipano%20direttamente"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#25D366",
+                  color: "#fff",
+                  textDecoration: "none",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  padding: "1rem 1.5rem",
+                  transition: "opacity 0.2s",
+                  fontWeight: 400,
+                  gap: "0.3rem",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+              >
+                Prenota direttamente su WhatsApp
+                <span style={{ fontSize: "0.6rem", letterSpacing: "0.06em", opacity: 0.85, textTransform: "none", fontWeight: 300 }}>
+                  Miglior prezzo garantito · risposta entro 1 ora
+                </span>
+              </a>
 
-                <a
-                  href="https://www.airbnb.it/rooms/1151100346729188269"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "#FF5A5F",
-                    color: "#fff",
-                    textDecoration: "none",
-                    fontSize: "0.7rem",
-                    letterSpacing: "0.15em",
-                    textTransform: "uppercase",
-                    padding: "1rem 1.5rem",
-                    transition: "opacity 0.2s",
-                    fontWeight: 400,
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.82"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                >
-                  Prenota su Airbnb
-                </a>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div>
+                  <a
+                    href="https://www.booking.com/Share-KLD1dK0"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "transparent",
+                      border: `1px solid ${c.cammello}`,
+                      color: c.lino,
+                      textDecoration: "none",
+                      fontSize: "0.7rem",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      padding: "1rem 1.5rem",
+                      transition: "background-color 0.25s",
+                      fontWeight: 300,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = c.cammello; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                  >
+                    Prenota su Booking.com
+                  </a>
+                  <p style={{ color: "rgba(212,201,181,0.6)", fontSize: "0.62rem", letterSpacing: "0.06em", textAlign: "center", marginTop: "0.4rem" }}>
+                    Conferma immediata · Cancellazione gratuita
+                  </p>
+                </div>
+
+                <div>
+                  <a
+                    href="https://www.airbnb.it/rooms/1151100346729188269"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "transparent",
+                      border: `1px solid ${c.cammello}`,
+                      color: c.lino,
+                      textDecoration: "none",
+                      fontSize: "0.7rem",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      padding: "1rem 1.5rem",
+                      transition: "background-color 0.25s",
+                      fontWeight: 300,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = c.cammello; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                  >
+                    Prenota su Airbnb
+                  </a>
+                  <p style={{ color: "rgba(212,201,181,0.6)", fontSize: "0.62rem", letterSpacing: "0.06em", textAlign: "center", marginTop: "0.4rem" }}>
+                    Pagamento sicuro · Assistenza 24/7
+                  </p>
+                </div>
 
                 <a
                   href="tel:+393661033691"
@@ -1095,6 +1201,7 @@ export default function IlTulipano() {
 
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
       <footer
+        id="footer"
         style={{
           backgroundColor: c.tabacco,
           padding: "3rem clamp(1.25rem, 5vw, 2.5rem)",

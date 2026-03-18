@@ -38,7 +38,7 @@ const alloggi = [
   {
     categoria: "RS Comfort",
     nome: "Il Tulipano",
-    desc: "Camera matrimoniale con bagno privato. Cucina e soggiorno in comune con gli altri ospiti.",
+    desc: "Camera matrimoniale con bagno privato esclusivo. Cucina e soggiorno condivisi, in un appartamento ordinato nel centro di Marcianise.",
     prezzo: "da €55 / notte",
     imgSrc: "/images/tulipano/dettaglio letto.png",
     href: "/alloggi/il-tulipano",
@@ -253,7 +253,7 @@ export default function Home() {
             marginBottom: "2rem",
           }}
         >
-          Soggiorna a Marcianise.
+          Dormire bene, a Marcianise.
         </h1>
 
         <p
@@ -267,8 +267,8 @@ export default function Home() {
             marginBottom: "3rem",
           }}
         >
-          Alloggi selezionati, curati nei dettagli e pronti per accoglierti.
-          Scegli il comfort che fa per te.
+          Camere curate, spazi silenziosi, assistenza presente.
+          Per chi viaggia per lavoro o cerca un posto tranquillo dove stare.
         </p>
 
         <div style={{ width: 36, height: 1, backgroundColor: c.cammello, marginBottom: "3rem" }} />
@@ -426,6 +426,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── SOCIAL PROOF ────────────────────────────────────────────────────── */}
+      <section
+        style={{
+          backgroundColor: c.tabacco,
+          padding: "clamp(2.5rem, 5vw, 3.5rem) clamp(1.25rem, 5vw, 2.5rem)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1100,
+            margin: "0 auto",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "clamp(2rem, 6vw, 5rem)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {[
+            { num: "9.2", label: "Voto medio su Booking.com" },
+            { num: "4.9★", label: "Valutazione su Airbnb" },
+            { num: "100%", label: "Ospiti che tornerebbero" },
+          ].map((item) => (
+            <div key={item.label} style={{ textAlign: "center" }}>
+              <p
+                style={{
+                  color: c.lino,
+                  fontSize: "clamp(1.8rem, 4vw, 2.4rem)",
+                  fontWeight: 300,
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1,
+                  marginBottom: "0.5rem",
+                }}
+              >
+                {item.num}
+              </p>
+              <p
+                style={{
+                  color: c.cammello,
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  fontWeight: 300,
+                }}
+              >
+                {item.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── CHI SIAMO ───────────────────────────────────────────────────────── */}
       <section
         id="chi-siamo"
@@ -466,9 +519,9 @@ export default function Home() {
                 marginBottom: "1.75rem",
               }}
             >
-              Sono Raffaele, un ragazzo di Marcianise. Ho iniziato con gli affitti
-              brevi quasi per gioco — un appartamento, qualche curiosità, voglia
-              di provare.
+              Ho iniziato con un appartamento e tanta curiosità. Col tempo ho
+              capito che fare ospitalità bene significa una cosa sola — esserci
+              davvero, con attenzione per ogni dettaglio.
             </p>
             <p
               style={{
@@ -481,9 +534,9 @@ export default function Home() {
                 marginBottom: "3rem",
               }}
             >
-              Poi le cose hanno cominciato a diventare serie. RS Hospitality è
-              il modo in cui metto cura e attenzione in ogni soggiorno. Una firma
-              personale su ogni dettaglio.
+              Che il letto sia come si deve, che gli spazi siano ordinati, che
+              ci sia qualcuno reperibile. RS Hospitality è il modo in cui ci
+              metto la faccia, su ogni soggiorno.
             </p>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1.5rem" }}>
@@ -566,8 +619,8 @@ export default function Home() {
                 letterSpacing: "0.01em",
               }}
             >
-              Hai un immobile a Marcianise?{" "}
-              <span style={{ color: c.cammello }}>Gestiamolo noi.</span>
+              Il tuo immobile a Marcianise,{" "}
+              <span style={{ color: c.cammello }}>nelle mani giuste.</span>
             </p>
             <p
               style={{
@@ -577,34 +630,47 @@ export default function Home() {
                 opacity: 0.6,
                 marginTop: "0.4rem",
                 letterSpacing: "0.02em",
+                lineHeight: 1.65,
               }}
             >
-              Affitti brevi, gestione completa, rendiconto mensile.
+              Affitti brevi, assistenza diretta, rendiconto mensile.
+              <br />Ci occupiamo di tutto, tu incassi.
             </p>
           </div>
-          <a
-            href="/proprietari"
-            style={{
-              color: c.tabacco,
-              textDecoration: "none",
-              fontSize: "0.72rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              borderBottom: `1px solid ${c.cammello}`,
-              paddingBottom: "2px",
-              transition: "color 0.2s, border-color 0.2s",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = c.cammello;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = c.tabacco;
-            }}
-          >
-            Scopri come →
-          </a>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flexShrink: 0 }}>
+            <a
+              href="/proprietari"
+              style={{
+                color: c.tabacco,
+                textDecoration: "none",
+                fontSize: "0.72rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                borderBottom: `1px solid ${c.cammello}`,
+                paddingBottom: "2px",
+                transition: "color 0.2s, border-color 0.2s",
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = c.cammello; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = c.tabacco; }}
+            >
+              Scopri come →
+            </a>
+            <a
+              href="https://wa.me/393661033691?text=Ciao%2C%20ho%20un%20immobile%20a%20Marcianise%20e%20vorrei%20saperne%20di%20pi%C3%B9"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: c.cammello,
+                textDecoration: "none",
+                fontSize: "0.7rem",
+                letterSpacing: "0.08em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Scrivici su WhatsApp
+            </a>
+          </div>
         </div>
       </section>
 

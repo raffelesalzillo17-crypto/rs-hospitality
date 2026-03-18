@@ -36,7 +36,7 @@ export default function ChiSiamo() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "Chi siamo | RS Hospitality";
+    document.title = "Chi siamo — Raffaele Salzillo, affitti brevi Marcianise | RS Hospitality";
   }, []);
 
   useEffect(() => {
