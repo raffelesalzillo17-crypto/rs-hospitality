@@ -38,8 +38,7 @@ const alloggi = [
   {
     categoria: "RS Comfort",
     nome: "Il Tulipano",
-    desc: "Camera matrimoniale con bagno privato esclusivo. Cucina e soggiorno condivisi, in un appartamento ordinato nel centro di Marcianise.",
-    prezzo: "da €55 / notte",
+    desc: "Camera matrimoniale con bagno privato esclusivo. Cucina e soggiorno condivisi, in un appartamento ordinato a pochi passi dalla stazione ferroviaria di Marcianise.",
     imgSrc: "/images/tulipano/dettaglio letto.png",
     href: "/alloggi/il-tulipano",
     delay: 0.1,
@@ -64,6 +63,7 @@ export default function Home() {
 
   const [alloggiRef, alloggiInView] = useInView();
   const [chiSiamoRef, chiSiamoInView] = useInView();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [propRef, propInView] = useInView();
 
   const navLinks = [
@@ -226,7 +226,7 @@ export default function Home() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "8rem clamp(1.25rem, 5vw, 2rem) 6rem",
+          padding: "120px clamp(1.25rem, 5vw, 2rem) 100px",
           textAlign: "center",
         }}
       >
@@ -246,20 +246,20 @@ export default function Home() {
           src="/images/logo-rs-hospitality.svg"
           alt="RS Hospitality"
           width={200}
-          height={68}
+          height={72}
           priority={true}
           style={{
-            height: "clamp(48px, 6vw, 68px)",
+            height: 72,
             width: "auto",
             objectFit: "contain",
-            marginBottom: "2rem",
+            marginBottom: 24,
           }}
         />
 
         <h1
           style={{
             color: c.lino,
-            fontSize: "clamp(2.2rem, 6vw, 4.8rem)",
+            fontSize: "clamp(36px, 5vw, 52px)",
             fontWeight: 300,
             lineHeight: 1.12,
             letterSpacing: "-0.01em",
@@ -303,7 +303,7 @@ export default function Home() {
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = c.cammello; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
         >
-          Vedi gli alloggi
+          Vedi l&apos;alloggio
         </a>
       </section>
 
@@ -400,39 +400,21 @@ export default function Home() {
 
                   <div style={{ height: 1, backgroundColor: c.sabbia, margin: "0.5rem 0" }} />
 
-                  <span
+                  <a
+                    href={a.href}
                     style={{
-                      color: c.tabacco,
-                      fontSize: "1.05rem",
-                      fontWeight: 400,
-                      letterSpacing: "0.01em",
+                      color: c.cammello,
+                      textDecoration: "none",
+                      fontSize: "0.88rem",
+                      fontWeight: 300,
+                      letterSpacing: "0.04em",
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
                   >
-                    {a.prezzo}
-                  </span>
+                    Scopri il prezzo →
+                  </a>
 
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <a
-                      href={a.href}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        backgroundColor: c.cammello,
-                        color: c.lino,
-                        textDecoration: "none",
-                        fontSize: "0.68rem",
-                        letterSpacing: "0.22em",
-                        textTransform: "uppercase",
-                        padding: "0.9rem 2rem",
-                        transition: "background-color 0.25s",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = c.tabacco; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = c.cammello; }}
-                    >
-                      Scopri l&apos;alloggio →
-                    </a>
-                  </div>
                 </div>
               </div>
             ))}
@@ -444,7 +426,7 @@ export default function Home() {
       <section
         style={{
           backgroundColor: c.tabacco,
-          padding: "clamp(2.5rem, 5vw, 3.5rem) clamp(1.25rem, 5vw, 2.5rem)",
+          padding: "56px clamp(1.25rem, 5vw, 2.5rem)",
           borderTop: "1px solid rgba(255,255,255,0.06)",
         }}
       >
@@ -468,7 +450,7 @@ export default function Home() {
               <p
                 style={{
                   color: c.lino,
-                  fontSize: "clamp(1.8rem, 4vw, 2.4rem)",
+                  fontSize: "48px",
                   fontWeight: 300,
                   letterSpacing: "-0.01em",
                   lineHeight: 1,
@@ -480,8 +462,8 @@ export default function Home() {
               <p
                 style={{
                   color: c.cammello,
-                  fontSize: "0.65rem",
-                  letterSpacing: "0.1em",
+                  fontSize: "9px",
+                  letterSpacing: "0.2em",
                   textTransform: "uppercase",
                   fontWeight: 300,
                 }}
@@ -498,7 +480,7 @@ export default function Home() {
         id="chi-siamo"
         style={{
           backgroundColor: c.tabacco,
-          padding: "clamp(5rem, 10vw, 9rem) clamp(1.25rem, 5vw, 2.5rem)",
+          padding: "80px clamp(1.25rem, 5vw, 2.5rem)",
         }}
       >
         <div
@@ -507,12 +489,12 @@ export default function Home() {
         >
           <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.07)", marginBottom: "3.5rem" }} />
 
-          <div style={{ maxWidth: 680 }}>
+          <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
             {/* Decorative quote mark */}
             <div
               style={{
                 color: c.cammello,
-                fontSize: "5rem",
+                fontSize: "64px",
                 lineHeight: 0.75,
                 fontWeight: 300,
                 marginBottom: "2.25rem",
@@ -528,7 +510,7 @@ export default function Home() {
                 color: c.sabbia,
                 fontSize: "clamp(1.05rem, 2.4vw, 1.22rem)",
                 fontWeight: 300,
-                lineHeight: 1.95,
+                lineHeight: 1.8,
                 letterSpacing: "0.01em",
                 marginBottom: "1.75rem",
               }}
@@ -540,7 +522,7 @@ export default function Home() {
                 color: c.sabbia,
                 fontSize: "clamp(1rem, 2.2vw, 1.15rem)",
                 fontWeight: 300,
-                lineHeight: 1.95,
+                lineHeight: 1.8,
                 letterSpacing: "0.01em",
                 opacity: 0.65,
                 marginBottom: "3rem",
@@ -598,7 +580,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PROPRIETARI (discreta) ───────────────────────────────────────────── */}
+      {/* PROPRIETARI - nascosta temporaneamente
       <section
         id="proprietari"
         style={{
@@ -683,14 +665,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+      */}
 
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
       <footer
         id="footer"
         style={{
           backgroundColor: c.tabacco,
-          padding: "3rem clamp(1.25rem, 5vw, 2.5rem)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "48px clamp(1.25rem, 5vw, 2.5rem) 3rem",
+          borderTop: "1px solid rgba(240,235,224,0.15)",
         }}
       >
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: "2rem" }}>

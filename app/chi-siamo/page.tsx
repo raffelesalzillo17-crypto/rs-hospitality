@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 const c = {
   tabacco: "#2C2416",
@@ -207,7 +208,7 @@ export default function ChiSiamo() {
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "flex-end",
-          padding: "8rem clamp(1.25rem, 5vw, 2.5rem) 4rem",
+          padding: "80px clamp(1.25rem, 5vw, 2.5rem) 64px",
         }}
       >
         <div style={{ maxWidth: 1100, width: "100%", margin: "0 auto" }}>
@@ -223,10 +224,18 @@ export default function ChiSiamo() {
             >
               RS Hospitality · Marcianise
             </p>
+            <Image
+              src="/images/logo-rs-hospitality.svg"
+              alt="RS Hospitality"
+              width={200}
+              height={56}
+              style={{ height: 56, width: "auto", objectFit: "contain", marginBottom: 16, display: "block" }}
+            />
             <h1
               style={{
                 color: c.lino,
-                fontSize: "clamp(2.2rem, 6vw, 4.5rem)",
+                fontSize: "52px",
+                fontStyle: "italic",
                 fontWeight: 300,
                 lineHeight: 1.1,
                 letterSpacing: "-0.01em",
@@ -243,13 +252,13 @@ export default function ChiSiamo() {
       <section
         style={{
           backgroundColor: c.lino,
-          padding: "clamp(5rem, 10vw, 9rem) clamp(1.25rem, 5vw, 2.5rem)",
+          padding: "80px clamp(1.25rem, 5vw, 2.5rem)",
         }}
       >
         <div
           ref={textRef}
           style={{
-            maxWidth: 700,
+            maxWidth: 660,
             margin: "0 auto",
             ...fade(textInView),
           }}
@@ -258,10 +267,10 @@ export default function ChiSiamo() {
           <div
             style={{
               color: c.cammello,
-              fontSize: "5rem",
-              lineHeight: 0.75,
+              fontSize: "56px",
+              lineHeight: 1,
               fontWeight: 300,
-              marginBottom: "2.5rem",
+              marginBottom: "8px",
               opacity: 0.3,
               userSelect: "none",
             }}
@@ -272,11 +281,11 @@ export default function ChiSiamo() {
           <p
             style={{
               color: c.tabacco,
-              fontSize: "clamp(1.1rem, 2.4vw, 1.25rem)",
-              fontWeight: 300,
-              lineHeight: 1.95,
+              fontSize: "20px",
+              fontWeight: 400,
+              lineHeight: 1.7,
               letterSpacing: "0.01em",
-              marginBottom: "1.75rem",
+              marginBottom: "32px",
             }}
           >
             Sono Raffaele, un ragazzo di Marcianise. RS Hospitality nasce quasi per caso — da un primo appartamento, un po&apos; di curiosità e la voglia di fare le cose fatte bene.
@@ -284,12 +293,11 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.72,
               marginBottom: "1.75rem",
             }}
           >
@@ -298,12 +306,11 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.72,
               marginBottom: "1.75rem",
             }}
           >
@@ -312,12 +319,11 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.72,
               marginBottom: "1.75rem",
             }}
           >
@@ -326,12 +332,11 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.72,
               marginBottom: "1.75rem",
             }}
           >
@@ -340,12 +345,11 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.72,
               marginBottom: "1.75rem",
             }}
           >
@@ -354,12 +358,11 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.72,
               marginBottom: "1.75rem",
             }}
           >
@@ -368,26 +371,23 @@ export default function ChiSiamo() {
 
           <p
             style={{
-              color: c.tabacco,
-              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              color: "#5a5040",
+              fontSize: "15px",
               fontWeight: 300,
-              lineHeight: 1.95,
+              lineHeight: 1.85,
               letterSpacing: "0.01em",
-              opacity: 0.68,
               marginBottom: "4rem",
             }}
           >
             RS Hospitality non è per chi cerca semplicemente il prezzo più basso. È per chi cerca un&apos;esperienza semplice, curata e senza pensieri.
           </p>
 
-          <div style={{ height: 1, backgroundColor: c.sabbia, marginBottom: "3rem" }} />
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem", marginTop: "48px", paddingTop: "32px", borderTop: `1px solid ${c.sabbia}` }}>
             <span
               style={{
                 color: c.tabacco,
-                fontSize: "0.88rem",
-                fontWeight: 400,
+                fontSize: "16px",
+                fontWeight: 500,
                 letterSpacing: "0.04em",
               }}
             >
@@ -396,8 +396,8 @@ export default function ChiSiamo() {
             <span
               style={{
                 color: c.cammello,
-                fontSize: "0.72rem",
-                letterSpacing: "0.08em",
+                fontSize: "12px",
+                letterSpacing: "0.05em",
                 fontWeight: 300,
               }}
             >
@@ -412,8 +412,8 @@ export default function ChiSiamo() {
         id="footer"
         style={{
           backgroundColor: c.tabacco,
-          padding: "3rem clamp(1.25rem, 5vw, 2.5rem)",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "48px clamp(1.25rem, 5vw, 2.5rem) 3rem",
+          borderTop: "1px solid rgba(240,235,224,0.15)",
         }}
       >
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: "2rem" }}>

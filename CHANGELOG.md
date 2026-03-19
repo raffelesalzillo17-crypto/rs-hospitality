@@ -4,6 +4,57 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-19 (aggiornamento 7 — revisione grafica completa)
+
+### Design — Homepage (`app/page.tsx`)
+- **Hero — logo**: height aumentato a 72px, margin-bottom 24px (era clamp 48–68px)
+- **Hero — H1**: fontSize ridotto a `clamp(36px, 5vw, 52px)` (era clamp 2.2–4.8rem)
+- **Hero — padding**: ridotto a 120px top / 100px bottom (era 8rem / 6rem)
+- **Card Il Tulipano**: rimosso bottone duplicato "Scopri l'alloggio →" (rimane solo il link testuale "Scopri il prezzo →")
+- **Statistiche**: padding ridotto a 56px top/bottom; numeri a 48px; label a 9px / letter-spacing 0.2em
+- **Chi siamo**: padding 80px top/bottom; virgolette a 64px; max-width 640px centrato; line-height paragrafi 1.8
+- **Footer**: border-top `rgba(240,235,224,0.15)`; padding-top 48px
+
+### Design — Pagina Il Tulipano (`app/alloggi/il-tulipano/page.tsx`)
+- **Hero — overlay**: gradient da `0.4/0.72` a `0.3/0.6` (meno pesante)
+- **Hero — eyebrow**: color sabbia `#D4C9B5`, text-shadow `0 1px 3px rgba(0,0,0,0.6)`
+- **Hero — H1**: aggiunto `text-shadow: 0 2px 8px rgba(0,0,0,0.4)`
+- **Galleria**: immagine principale con border-radius 2px; thumbnail gap 6px, border-radius 2px
+- **Descrizione + Dotazioni**: padding sezioni a 64px top/bottom
+- **Dotazioni**: griglia 2 colonne su desktop (era 3) — aggiornato in `globals.css`
+- **Modulo disponibilità — input/select**: border `1px solid #8B7355` (era 0.4 opacity); background `rgba(255,255,255,0.05)`
+- **Bottoni Booking/Airbnb/Contattaci**: hover unificato RS — background cammello, color tabacco
+- **Mappa**: padding 64px; iframe container con border-radius 4px
+- **Footer**: allineato a homepage (border-top e padding)
+
+### Design — Pagina Chi siamo (`app/chi-siamo/page.tsx`)
+- **Hero**: padding 80px top / 64px bottom; logo RS aggiunto (height 56px); H1 a 52px italic
+- **Sezione testo**: padding 80px; max-width 660px; virgolette 56px / line-height 1 / margin-bottom 8px
+- **Primo paragrafo**: 20px, font-weight 400, line-height 1.7
+- **Paragrafi successivi**: 15px, color `#5a5040`, line-height 1.85 (rimosso opacity)
+- **Firma Raffaele**: border-top `1px solid #D4C9B5`, margin-top 48px, padding-top 32px; nome 16px/500; sottotitolo 12px/0.05em
+
+---
+
+## [Unreleased] — 2026-03-19 (aggiornamento 6 — singolare, posizione, ospiti, date WhatsApp, alternative occupato, calendario rimosso, prezzo homepage, proprietari nascosta)
+
+### Copywriting
+- **Il Tulipano — descrizione**: "nel centro di Marcianise" → "a pochi passi dalla stazione ferroviaria di Marcianise"
+- **Homepage — hero CTA**: "Vedi gli alloggi" → "Vedi l'alloggio" (singolare, un solo alloggio disponibile)
+- **Homepage — card alloggio**: rimosso "nel centro di Marcianise" dalla descrizione, aggiornata posizione coerente con pagina Il Tulipano
+
+### Modulo disponibilità
+- **Numero ospiti**: massimo ridotto da 4 a 3 (opzioni: 1 ospite, 2 ospiti, 3 ospiti)
+- **Date WhatsApp**: URL precompilato ora usa `toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })` — es. "lunedì 6 aprile 2026"
+- **Date alternative se occupato**: quando il periodo è occupato, calcola automaticamente le 3 finestre libere più vicine (stessa durata); mostrate come bottoni cliccabili con formato data esteso; al click aggiorna il form e sblocca il bottone WhatsApp
+
+### Layout
+- **Calendario mensile rimosso**: rimossa sezione calendario (giorni rossi/verdi) sotto il modulo disponibilità — rimane solo il modulo di verifica
+- **Homepage — prezzo card**: rimosso "da €55 / notte"; sostituito con link "Scopri il prezzo →" che porta a /alloggi/il-tulipano
+- **Homepage — sezione proprietari**: commentata con `{/* PROPRIETARI - nascosta temporaneamente */}` — codice intatto, non visualizzato
+
+---
+
 ## [Unreleased] — 2026-03-19 (aggiornamento 5 — plurale, dominio, chi siamo, nav, logo, disponibilità)
 
 ### Copywriting
