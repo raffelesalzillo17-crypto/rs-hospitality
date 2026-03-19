@@ -144,7 +144,6 @@ export default function IlTulipano() {
       "@type": "LodgingBusiness",
       name: "Il Tulipano — RS Hospitality",
       description: "Camera matrimoniale con bagno privato ad uso esclusivo a Marcianise (CE). Affitti brevi vicino Caserta, da €55 a notte.",
-      url: "https://rshospitality.it/alloggi/il-tulipano",
       telephone: "+393661033691",
       address: {
         "@type": "PostalAddress",
@@ -155,7 +154,7 @@ export default function IlTulipano() {
         addressCountry: "IT",
       },
       priceRange: "€55–€80",
-      image: "https://rshospitality.it/images/tulipano/Foto letto ampia.png",
+      image: "/images/tulipano/Foto letto ampia.png",
       amenityFeature: [
         { "@type": "LocationFeatureSpecification", name: "Wi-Fi gratuito", value: true },
         { "@type": "LocationFeatureSpecification", name: "Bagno privato esclusivo", value: true },
@@ -188,9 +187,39 @@ export default function IlTulipano() {
   const [busyDates, setBusyDates] = useState<{start: string; end: string}[]>([]);
   const [calLoading, setCalLoading] = useState(true);
 
+  // Form disponibilità
+  const [formArrivo, setFormArrivo] = useState("");
+  const [formPartenza, setFormPartenza] = useState("");
+  const [formOspiti, setFormOspiti] = useState(2);
+  const [disponibilita, setDisponibilita] = useState<boolean | null>(null);
+  const [formVerificando, setFormVerificando] = useState(false);
+
+  const verificaDisponibilita = async () => {
+    if (!formArrivo || !formPartenza) return;
+    setFormVerificando(true);
+    setDisponibilita(null);
+    try {
+      const res = await fetch("/api/calendar");
+      const data = await res.json();
+      const events: { start: string; end: string }[] = data.events ?? [];
+      const arrivo = new Date(formArrivo);
+      const partenza = new Date(formPartenza);
+      const occupato = events.some(({ start, end }) => {
+        const s = new Date(start);
+        const e = new Date(end);
+        return arrivo < e && partenza > s;
+      });
+      setDisponibilita(!occupato);
+    } catch {
+      setDisponibilita(null);
+    } finally {
+      setFormVerificando(false);
+    }
+  };
+
   const navLinks = [
     { label: "Alloggi",   href: "/#alloggi" },
-    { label: "Chi siamo", href: "/#proprietari" },
+    { label: "Chi siamo", href: "/#chi-siamo" },
     { label: "Contatti",  href: "/#footer" },
   ];
 
@@ -402,19 +431,7 @@ export default function IlTulipano() {
             Il Tulipano
           </h1>
 
-          <div style={{ width: 36, height: 1, backgroundColor: c.cammello, marginBottom: "2rem" }} />
-
-          <p
-            style={{
-              color: c.sabbia,
-              fontSize: "clamp(0.82rem, 1.8vw, 0.95rem)",
-              fontWeight: 300,
-              letterSpacing: "0.06em",
-              marginBottom: "3rem",
-            }}
-          >
-            da €55 / notte
-          </p>
+          <div style={{ width: 36, height: 1, backgroundColor: c.cammello, marginBottom: "3rem" }} />
 
           <a
             href="#galleria"
@@ -753,7 +770,7 @@ export default function IlTulipano() {
         </div>
       </section>
 
-      {/* ── PREZZO E PRENOTAZIONE ───────────────────────────────────────────── */}
+      {/* ── DISPONIBILITÀ E PRENOTAZIONE ────────────────────────────────────── */}
       <section
         style={{
           backgroundColor: c.lino,
@@ -763,7 +780,7 @@ export default function IlTulipano() {
         <div ref={prezzoRef} style={{ maxWidth: 1100, margin: "0 auto", ...fade(prezzoInView) }}>
           <div className="rs-prezzo-layout">
 
-            {/* Prezzi + CTA */}
+            {/* Modulo disponibilità */}
             <div
               style={{
                 backgroundColor: c.tabacco,
@@ -781,100 +798,182 @@ export default function IlTulipano() {
                   textTransform: "uppercase",
                 }}
               >
-                Tariffe
+                Verifica disponibilità
               </p>
 
-              {/* Tariffa principale */}
-              <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
-                <span
-                  style={{
-                    color: c.lino,
-                    fontSize: "clamp(2rem, 4.5vw, 2.8rem)",
-                    fontWeight: 300,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  da €55
-                </span>
-                <span style={{ color: c.cammello, fontSize: "0.82rem", letterSpacing: "0.04em" }}>
-                  / notte
-                </span>
-              </div>
-
-              {/* Griglia stagionale */}
-              <div
+              <h3
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: "1px",
-                  backgroundColor: "rgba(255,255,255,0.08)",
+                  color: c.lino,
+                  fontSize: "clamp(1.2rem, 2.5vw, 1.6rem)",
+                  fontWeight: 300,
+                  letterSpacing: "0.01em",
                 }}
               >
-                {[
-                  { label: "Bassa stagione", price: "€55", note: "lun–gio" },
-                  { label: "Alta stagione", price: "€70", note: "estate/feste" },
-                  { label: "Weekend", price: "€80", note: "ven–dom" },
-                ].map((t) => (
-                  <div
-                    key={t.label}
+                Il Tulipano
+              </h3>
+
+              {/* Form date */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div>
+                  <label style={{ color: c.sabbia, fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: "0.4rem" }}>
+                    Data arrivo
+                  </label>
+                  <input
+                    type="date"
+                    value={formArrivo}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => { setFormArrivo(e.target.value); setDisponibilita(null); }}
                     style={{
-                      backgroundColor: c.tabacco,
-                      padding: "0.85rem 0.75rem",
-                      textAlign: "center",
+                      width: "100%",
+                      backgroundColor: "rgba(255,255,255,0.06)",
+                      border: `1px solid rgba(139,115,85,0.4)`,
+                      color: c.lino,
+                      fontSize: "0.82rem",
+                      padding: "0.75rem 0.9rem",
+                      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: c.sabbia, fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: "0.4rem" }}>
+                    Data partenza
+                  </label>
+                  <input
+                    type="date"
+                    value={formPartenza}
+                    min={formArrivo || new Date().toISOString().split("T")[0]}
+                    onChange={(e) => { setFormPartenza(e.target.value); setDisponibilita(null); }}
+                    style={{
+                      width: "100%",
+                      backgroundColor: "rgba(255,255,255,0.06)",
+                      border: `1px solid rgba(139,115,85,0.4)`,
+                      color: c.lino,
+                      fontSize: "0.82rem",
+                      padding: "0.75rem 0.9rem",
+                      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: c.sabbia, fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: "0.4rem" }}>
+                    Numero ospiti
+                  </label>
+                  <select
+                    value={formOspiti}
+                    onChange={(e) => setFormOspiti(Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      backgroundColor: "rgba(255,255,255,0.06)",
+                      border: `1px solid rgba(139,115,85,0.4)`,
+                      color: c.lino,
+                      fontSize: "0.82rem",
+                      padding: "0.75rem 0.9rem",
+                      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      appearance: "none",
                     }}
                   >
-                    <p style={{ color: c.cammello, fontSize: "0.55rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.35rem" }}>
-                      {t.label}
-                    </p>
-                    <p style={{ color: c.lino, fontSize: "1rem", fontWeight: 300 }}>{t.price}</p>
-                    <p style={{ color: "rgba(212,201,181,0.45)", fontSize: "0.55rem", marginTop: "0.2rem" }}>{t.note}</p>
-                  </div>
-                ))}
+                    {[1, 2, 3, 4].map((n) => (
+                      <option key={n} value={n} style={{ backgroundColor: c.tabacco }}>
+                        {n} {n === 1 ? "ospite" : "ospiti"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <p
+              {/* Bottone verifica */}
+              <button
+                onClick={verificaDisponibilita}
+                disabled={!formArrivo || !formPartenza || formVerificando}
                 style={{
-                  color: c.sabbia,
-                  fontSize: "0.72rem",
-                  fontWeight: 300,
-                  lineHeight: 1.65,
-                  opacity: 0.7,
-                }}
-              >
-                Lettino aggiuntivo disponibile a €20 / notte.
-              </p>
-
-              <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.07)" }} />
-
-              {/* CTA prenotazione diretta WhatsApp */}
-              <a
-                href="https://wa.me/393661033691?text=Ciao%2C%20vorrei%20prenotare%20Il%20Tulipano%20direttamente"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "#25D366",
-                  color: "#fff",
-                  textDecoration: "none",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.12em",
+                  backgroundColor: (!formArrivo || !formPartenza) ? "rgba(139,115,85,0.3)" : c.cammello,
+                  color: c.lino,
+                  border: "none",
+                  fontSize: "0.68rem",
+                  letterSpacing: "0.22em",
                   textTransform: "uppercase",
                   padding: "1rem 1.5rem",
-                  transition: "opacity 0.2s",
-                  fontWeight: 400,
-                  gap: "0.3rem",
+                  cursor: (!formArrivo || !formPartenza) ? "not-allowed" : "pointer",
+                  transition: "background-color 0.25s",
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                onMouseEnter={(e) => { if (formArrivo && formPartenza) e.currentTarget.style.backgroundColor = c.tabacco; }}
+                onMouseLeave={(e) => { if (formArrivo && formPartenza) e.currentTarget.style.backgroundColor = c.cammello; }}
               >
-                Prenota direttamente su WhatsApp
-                <span style={{ fontSize: "0.6rem", letterSpacing: "0.06em", opacity: 0.85, textTransform: "none", fontWeight: 300 }}>
-                  Miglior prezzo garantito · risposta entro 1 ora
-                </span>
-              </a>
+                {formVerificando ? "Verifica in corso…" : "Verifica disponibilità"}
+              </button>
+
+              {/* Esito verifica */}
+              {disponibilita === true && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div
+                    style={{
+                      backgroundColor: "rgba(46,125,82,0.18)",
+                      border: "1px solid rgba(46,125,82,0.5)",
+                      padding: "0.85rem 1rem",
+                    }}
+                  >
+                    <p style={{ color: "#4caf7d", fontSize: "0.78rem", fontWeight: 400, letterSpacing: "0.04em" }}>
+                      Disponibile per le date selezionate
+                    </p>
+                  </div>
+                  <a
+                    href={`https://wa.me/393661033691?text=Ciao%2C+vorrei+prenotare+Il+Tulipano+dal+${formArrivo}+al+${formPartenza}+per+${formOspiti}+${formOspiti === 1 ? "ospite" : "ospiti"}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "#25D366",
+                      color: "#fff",
+                      textDecoration: "none",
+                      fontSize: "0.7rem",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      padding: "1rem 1.5rem",
+                      transition: "opacity 0.2s",
+                      fontWeight: 400,
+                      gap: "0.3rem",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                  >
+                    Prenota su WhatsApp
+                    <span style={{ fontSize: "0.6rem", letterSpacing: "0.06em", opacity: 0.85, textTransform: "none", fontWeight: 300 }}>
+                      Miglior prezzo garantito · risposta entro 1 ora
+                    </span>
+                  </a>
+                </div>
+              )}
+
+              {disponibilita === false && (
+                <div
+                  style={{
+                    backgroundColor: "rgba(192,57,43,0.15)",
+                    border: "1px solid rgba(192,57,43,0.4)",
+                    padding: "0.85rem 1rem",
+                  }}
+                >
+                  <p style={{ color: "#e57373", fontSize: "0.78rem", fontWeight: 400, letterSpacing: "0.04em", marginBottom: "0.3rem" }}>
+                    Periodo occupato
+                  </p>
+                  <p style={{ color: "rgba(240,235,224,0.55)", fontSize: "0.7rem", fontWeight: 300 }}>
+                    Prova a modificare le date per trovare disponibilità.
+                  </p>
+                </div>
+              )}
+
+              <div style={{ height: 1, backgroundColor: "rgba(255,255,255,0.07)" }} />
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 <div>
@@ -1220,9 +1319,6 @@ export default function IlTulipano() {
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-              <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
-                rshospitality.it
-              </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
               </a>

@@ -2,18 +2,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://rshospitality.it"),
   title: {
     default: "RS Hospitality — Affitti brevi a Marcianise, Caserta",
     template: "%s | RS Hospitality",
   },
   description:
-    "Affitti brevi a Marcianise, Caserta. Il Tulipano: camera matrimoniale con bagno privato esclusivo a pochi minuti dal casello A1. Da €55 a notte. Prenota su Booking o Airbnb.",
+    "Affitti brevi a Marcianise, Caserta. Il Tulipano: camera matrimoniale con bagno privato esclusivo a pochi minuti dal casello A1. Prenota su Booking o Airbnb.",
   openGraph: {
     title: "RS Hospitality — Affitti brevi a Marcianise, Caserta",
     description:
-      "Camera matrimoniale con bagno privato a Marcianise (CE). Affitti brevi vicino Caserta, da €55 a notte.",
-    url: "https://rshospitality.it",
+      "Camera matrimoniale con bagno privato a Marcianise (CE). Affitti brevi vicino Caserta.",
     siteName: "RS Hospitality",
     locale: "it_IT",
     type: "website",
@@ -30,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "RS Hospitality — Affitti brevi Marcianise, Caserta",
     description:
-      "Camera matrimoniale con bagno privato a Marcianise (CE). Da €55 a notte, prenotazione su Booking e Airbnb.",
+      "Camera matrimoniale con bagno privato a Marcianise (CE). Prenotazione su Booking e Airbnb.",
     images: ["/images/tulipano/Foto letto ampia.png"],
   },
 };
@@ -45,7 +43,6 @@ export default function RootLayout({
     "@type": "LocalBusiness",
     name: "RS Hospitality",
     description: "Affitti brevi a Marcianise, Caserta. Camera matrimoniale con bagno privato esclusivo.",
-    url: "https://rshospitality.it",
     telephone: "+393661033691",
     address: {
       "@type": "PostalAddress",
@@ -61,7 +58,7 @@ export default function RootLayout({
       longitude: 14.2991,
     },
     priceRange: "€€",
-    image: "https://rshospitality.it/images/tulipano/Foto letto ampia.png",
+    image: "/images/tulipano/Foto letto ampia.png",
     sameAs: [
       "https://www.booking.com/Share-KLD1dK0",
       "https://www.airbnb.it/rooms/1151100346729188269",

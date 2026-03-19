@@ -1,0 +1,16 @@
+<svg width="240" height="80" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg">
+  <text x="120" y="52" 
+    font-family="Helvetica Neue, Helvetica, Arial, sans-serif" 
+    font-size="52" 
+    font-weight="300"
+    letter-spacing="8"
+    fill="#F0EBE0" 
+    text-anchor="middle">RS</text>
+  <text x="120" y="72" 
+    font-family="Helvetica Neue, Helvetica, Arial, sans-serif" 
+    font-size="10" 
+    font-weight="400"
+    letter-spacing="6"
+    fill="#8B7355" 
+    text-anchor="middle">HOSPITALITY</text>
+</svg>

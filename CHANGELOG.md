@@ -4,6 +4,34 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-19 (aggiornamento 5 — plurale, dominio, chi siamo, nav, logo, disponibilità)
+
+### Copywriting
+- **Homepage — sezione alloggi**: titolo "I nostri alloggi" → "Il Tulipano — RS Comfort" (singolo, specifico)
+- **Homepage — sezione chi siamo**: testo sostituito con versione personale estesa di Raffaele (pluriparagrafo)
+- **Pagina /chi-siamo**: testo completo sostituito con versione definitiva (9 paragrafi, tono RS)
+
+### Design
+- **Homepage — hero**: aggiunto logo (`/images/tulipano/Logo.png`) centrato sopra l'h1, `height: clamp(56px, 8vw, 80px)`, `next/image` con `priority`
+
+### Contatti / Dominio
+- **Rimosso `rshospitality.it`** da tutti i footer (homepage, /chi-siamo, /alloggi/il-tulipano, /proprietari)
+- **Rimosso `metadataBase`** e `og:url` da `layout.tsx` (nessun dominio hardcoded nei metadata)
+- **Rimosso url** dai JSON-LD in layout.tsx e il-tulipano/page.tsx; image URL diventate relative
+
+### Navigazione
+- **Fix link "Chi siamo"** in `/alloggi/il-tulipano`: era `/#proprietari`, corretto in `/#chi-siamo`
+- **/chi-siamo** e **/proprietari**: link già corretti, verificati
+
+### Disponibilità (modulo)
+- **Pagina /alloggi/il-tulipano**: rimossi prezzi fissi (€55/€70/€80) dalla sezione prenotazione e dall'hero
+- **Modulo disponibilità**: form con data arrivo (date picker), data partenza, numero ospiti (1–4 select); bottone "Verifica disponibilità"
+- **Logica**: al click fetcha `/api/calendar`, confronta date selezionate con eventi iCal; se libero → messaggio verde + bottone WhatsApp sbloccato con URL precompilato (`wa.me/393661033691?text=...`); se occupato → messaggio rosso + suggerimento di modificare le date
+- URL WhatsApp precompilato con `[dataArrivo]`, `[dataPartenza]`, `[nOspiti]` reali
+- Stile: palette RS, font Helvetica, nessun colore esterno (solo #25D366 per WhatsApp e segnali di stato verde/rosso semantici)
+
+---
+
 ## [Unreleased] — 2026-03-18 (aggiornamento 4 — fix visivi e bug)
 
 ### Bug fix

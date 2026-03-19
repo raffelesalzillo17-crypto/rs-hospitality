@@ -4,7 +4,8 @@
       "Bash(\"C:/Users/salzi/rs-hospitality/CHANGELOG.md\":*)",
       "Bash(npx tsc:*)",
       "Bash(find /c/Users/salzi/rs-hospitality -maxdepth 3 -type d -not -path */node_modules/* -not -path */.next/* -not -path */.git/*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git add:*)"
     ]
   }
 }

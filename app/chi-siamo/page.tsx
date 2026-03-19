@@ -279,9 +279,7 @@ export default function ChiSiamo() {
               marginBottom: "1.75rem",
             }}
           >
-            Sono Raffaele, un ragazzo di Marcianise. Ho iniziato con gli affitti
-            brevi quasi per gioco — un appartamento, qualche curiosità, voglia
-            di provare.
+            Sono Raffaele, un ragazzo di Marcianise. RS Hospitality nasce quasi per caso — da un primo appartamento, un po&apos; di curiosità e la voglia di fare le cose fatte bene.
           </p>
 
           <p
@@ -295,10 +293,77 @@ export default function ChiSiamo() {
               marginBottom: "1.75rem",
             }}
           >
-            Poi le cose hanno cominciato a diventare serie. Ho capito che c&rsquo;era
-            un modo di fare ospitalità che si poteva fare meglio — con più
-            cura, più attenzione ai dettagli, più rispetto per chi arriva dopo
-            una giornata di viaggio.
+            Col tempo, però, è diventato qualcosa di più. Ho capito che l&apos;ospitalità non è solo dare un posto dove dormire, ma far sentire le persone nel posto giusto, al momento giusto.
+          </p>
+
+          <p
+            style={{
+              color: c.tabacco,
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              fontWeight: 300,
+              lineHeight: 1.95,
+              letterSpacing: "0.01em",
+              opacity: 0.72,
+              marginBottom: "1.75rem",
+            }}
+          >
+            Per me significa creare familiarità, anche lontano da casa. Significa trovare un ambiente curato, ordinato, pronto ad accoglierti davvero — senza stress, senza sorprese.
+          </p>
+
+          <p
+            style={{
+              color: c.tabacco,
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              fontWeight: 300,
+              lineHeight: 1.95,
+              letterSpacing: "0.01em",
+              opacity: 0.72,
+              marginBottom: "1.75rem",
+            }}
+          >
+            RS Hospitality è questo: un modo di ospitare che unisce attenzione, semplicità e presenza.
+          </p>
+
+          <p
+            style={{
+              color: c.tabacco,
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              fontWeight: 300,
+              lineHeight: 1.95,
+              letterSpacing: "0.01em",
+              opacity: 0.72,
+              marginBottom: "1.75rem",
+            }}
+          >
+            Puoi arrivare in autonomia oppure essere accolto di persona, ma quello che non cambia è la cura che c&apos;è dietro ogni soggiorno.
+          </p>
+
+          <p
+            style={{
+              color: c.tabacco,
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              fontWeight: 300,
+              lineHeight: 1.95,
+              letterSpacing: "0.01em",
+              opacity: 0.72,
+              marginBottom: "1.75rem",
+            }}
+          >
+            Ogni spazio è pensato, ogni dettaglio ha un motivo. Non è solo gestione: è responsabilità verso chi entra dopo un viaggio, verso il tempo che decide di trascorrere lì.
+          </p>
+
+          <p
+            style={{
+              color: c.tabacco,
+              fontSize: "clamp(1.05rem, 2.2vw, 1.18rem)",
+              fontWeight: 300,
+              lineHeight: 1.95,
+              letterSpacing: "0.01em",
+              opacity: 0.72,
+              marginBottom: "1.75rem",
+            }}
+          >
+            Non siamo una catena e non lavoriamo in modo impersonale. Stiamo costruendo un brand, sì — ma senza perdere ciò che conta davvero: l&apos;ospitalità.
           </p>
 
           <p
@@ -312,9 +377,7 @@ export default function ChiSiamo() {
               marginBottom: "4rem",
             }}
           >
-            RS Hospitality è il risultato di quell&rsquo;idea. Una firma personale
-            su ogni soggiorno — ogni dettaglio pensato, ogni spazio curato.
-            Non una catena, non un algoritmo. Solo la cura che ci metto io.
+            RS Hospitality non è per chi cerca semplicemente il prezzo più basso. È per chi cerca un&apos;esperienza semplice, curata e senza pensieri.
           </p>
 
           <div style={{ height: 1, backgroundColor: c.sabbia, marginBottom: "3rem" }} />
@@ -365,9 +428,6 @@ export default function ChiSiamo() {
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-              <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
-                rshospitality.it
-              </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
               </a>

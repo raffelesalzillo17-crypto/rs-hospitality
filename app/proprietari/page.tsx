@@ -730,9 +730,6 @@ export default function Proprietari() {
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-              <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
-                rshospitality.it
-              </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
               </a>

@@ -242,6 +242,20 @@ export default function Home() {
           Marcianise, Caserta — Italia
         </p>
 
+        <Image
+          src="/images/logo-rs-hospitality.svg"
+          alt="RS Hospitality"
+          width={200}
+          height={68}
+          priority={true}
+          style={{
+            height: "clamp(48px, 6vw, 68px)",
+            width: "auto",
+            objectFit: "contain",
+            marginBottom: "2rem",
+          }}
+        />
+
         <h1
           style={{
             color: c.lino,
@@ -324,7 +338,7 @@ export default function Home() {
                 letterSpacing: "0.01em",
               }}
             >
-              I nostri alloggi
+              Il Tulipano — RS Comfort
             </h2>
           </div>
 
@@ -519,9 +533,7 @@ export default function Home() {
                 marginBottom: "1.75rem",
               }}
             >
-              Ho iniziato con un appartamento e tanta curiosità. Col tempo ho
-              capito che fare ospitalità bene significa una cosa sola — esserci
-              davvero, con attenzione per ogni dettaglio.
+              Sono Raffaele, un ragazzo di Marcianise. RS Hospitality nasce quasi per caso — da un primo appartamento, un po&apos; di curiosità e la voglia di fare le cose fatte bene.
             </p>
             <p
               style={{
@@ -534,9 +546,7 @@ export default function Home() {
                 marginBottom: "3rem",
               }}
             >
-              Che il letto sia come si deve, che gli spazi siano ordinati, che
-              ci sia qualcuno reperibile. RS Hospitality è il modo in cui ci
-              metto la faccia, su ogni soggiorno.
+              Per me significa creare familiarità, anche lontano da casa. Un ambiente curato, ordinato, pronto ad accoglierti davvero — senza stress, senza sorprese. RS Hospitality è questo: un modo di ospitare che unisce attenzione, semplicità e presenza.
             </p>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1.5rem" }}>
@@ -695,9 +705,6 @@ export default function Home() {
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-              <a href="https://rshospitality.it" style={{ color: c.sabbia, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.08em" }}>
-                rshospitality.it
-              </a>
               <a href="tel:+393661033691" style={{ color: c.cammello, textDecoration: "none", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                 +39 366 103 3691
               </a>
