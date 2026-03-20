@@ -43,8 +43,11 @@ type Booking = {
   notes: string | null;
   status: string;
   total_price: number | null;
+  gross_amount: number | null;
   uid_ical: string | null;
   guest_id: string | null;
+  booking_type: string | null;
+  ota_booking_ref: string | null;
   guests: Guest | Guest[] | null;
   properties: { id: string; name: string } | { id: string; name: string }[] | null;
 };
@@ -106,11 +109,13 @@ function getPropName(b: Booking): string | null {
   return p?.name ?? null;
 }
 function barColor(b: Booking): string {
+  if (b.booking_type === "block") return "#555";
   if (b.uid_ical && !b.guest_id) return "#aaa";
   if (b.status === "pending") return "#c9963a";
   return "#2d6a4f";
 }
 function barLabel(b: Booking): string {
+  if (b.booking_type === "block") return "Blocco";
   return getGuest(b)?.full_name ?? fmtCh(b.channel);
 }
 function buildBookingMap(bookings: Booking[]) {
@@ -160,6 +165,13 @@ export default function AdminPage() {
   const [saving,     setSaving]     = useState(false);
   const [saved,      setSaved]      = useState(false);
   const [formError,  setFormError]  = useState<string | null>(null);
+
+  const [blockOpen,   setBlockOpen]   = useState(false);
+  const [blockForm,   setBlockForm]   = useState({ check_in: "", check_out: "" });
+  const [blockSaving, setBlockSaving] = useState(false);
+
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvResult,    setCsvResult]    = useState<{ updated: number; skipped: number; errors: string[] } | null>(null);
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchBookings = useCallback(async () => {
@@ -243,6 +255,43 @@ export default function AdminPage() {
     }
   }
 
+  // ── Blocca date ────────────────────────────────────────────────────────────
+  async function handleBlockSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBlockSaving(true);
+    const { data: prop } = await supabase.from("properties").select("id").eq("active", true).limit(1).maybeSingle();
+    await supabase.from("bookings").insert({
+      property_id:  prop?.id ?? null,
+      check_in:     blockForm.check_in,
+      check_out:    blockForm.check_out,
+      booking_type: "block",
+      status:       "confirmed",
+      channel:      "diretto",
+      num_guests:   0,
+    });
+    setBlockForm({ check_in: "", check_out: "" });
+    setBlockOpen(false);
+    setBlockSaving(false);
+    await fetchBookings();
+  }
+
+  // ── Import CSV ─────────────────────────────────────────────────────────────
+  async function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvImporting(true); setCsvResult(null);
+    const csv = await file.text();
+    const res = await fetch("/api/import-csv", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-RS-Secret": "rshospitality2026" },
+      body: JSON.stringify({ csv }),
+    });
+    setCsvResult(await res.json());
+    setCsvImporting(false);
+    e.target.value = "";
+    await fetchBookings();
+  }
+
   // ── Copy link ──────────────────────────────────────────────────────────────
   function copyLink(id: string) {
     navigator.clipboard.writeText(`https://rs-hospitality.vercel.app/checkin/${id}`);
@@ -268,8 +317,9 @@ export default function AdminPage() {
   }, [currentMonth]);
 
   const sortedBookings = useMemo(() => {
-    const future = bookings.filter(b => b.check_out >= today);
-    const past   = bookings.filter(b => b.check_out < today);
+    const real   = bookings.filter(b => b.booking_type !== "block");
+    const future = real.filter(b => b.check_out >= today);
+    const past   = real.filter(b => b.check_out < today);
     return [...future, ...past];
   }, [bookings, today]);
 
@@ -440,7 +490,7 @@ export default function AdminPage() {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
-                      {["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Stato","Pagamento","Check-in"].map(h => (
+                      {["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Stato","Pagamento","Check-in"].map(h => (
                         <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -453,7 +503,10 @@ export default function AdminPage() {
                       return (
                         <tr key={b.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: rowBg, opacity: isPast ? 0.5 : 1, cursor: "pointer" }} onClick={() => setSelectedBooking(b)}>
                           <td style={{ padding: "11px 12px" }}>
-                            <div style={{ fontWeight: 500 }}>{guest?.full_name ?? <span style={{ color: c.sabbia }}>—</span>}</div>
+                            {guest?.full_name
+                              ? <div style={{ fontWeight: 500 }}>{guest.full_name}</div>
+                              : <div style={{ color: c.cammello, fontStyle: "italic" }}>Ospite non identificato</div>
+                            }
                             {guest?.phone && <div style={{ fontSize: 11, color: c.cammello }}>{guest.phone}</div>}
                           </td>
                           <td style={{ padding: "11px 12px" }}>{getPropName(b) ?? <span style={{ color: c.sabbia }}>—</span>}</td>
@@ -461,6 +514,9 @@ export default function AdminPage() {
                           <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }}>{fmt(b.check_out)}</td>
                           <td style={{ padding: "11px 12px", color: c.cammello, textAlign: "center" }}>{notti(b.check_in, b.check_out)}</td>
                           <td style={{ padding: "11px 12px" }}>{fmtCh(b.channel)}</td>
+                          <td style={{ padding: "11px 12px", color: b.gross_amount ? c.tabacco : c.sabbia }}>
+                            {b.gross_amount ? `€ ${b.gross_amount}` : "—"}
+                          </td>
                           <td style={{ padding: "11px 12px" }}>
                             <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: STATUS_STYLE[b.status]?.bg ?? c.sabbia, color: STATUS_STYLE[b.status]?.color ?? c.tabacco }}>
                               {STATUS_LABEL[b.status] ?? b.status}
@@ -509,7 +565,23 @@ export default function AdminPage() {
               <h2 style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: 0, letterSpacing: "-0.01em" }}>Ultimi 10 import email</h2>
               <button onClick={fetchImportLogs} style={{ padding: "6px 14px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "none", fontSize: 12, color: c.cammello, fontFamily: "inherit", cursor: "pointer" }}>Aggiorna</button>
             </div>
-            {importLogs.length === 0
+            {/* Import storico CSV */}
+            <div style={{ marginBottom: 32, background: c.sabbia, borderRadius: 6, padding: "20px 24px" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: c.tabacco, margin: "0 0 4px", letterSpacing: "0.04em", textTransform: "uppercase" }}>Import storico CSV</p>
+              <p style={{ fontSize: 12, color: c.cammello, margin: "0 0 14px" }}>Carica il CSV esportato da Airbnb per aggiornare nome ospite e importo sulle prenotazioni esistenti.</p>
+              <label style={{ display: "inline-block", padding: "9px 18px", background: c.tabacco, color: c.lino, borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: csvImporting ? "default" : "pointer", opacity: csvImporting ? 0.6 : 1, letterSpacing: "0.04em" }}>
+                {csvImporting ? "Importazione…" : "Scegli file CSV"}
+                <input type="file" accept=".csv" style={{ display: "none" }} disabled={csvImporting} onChange={handleCsvImport} />
+              </label>
+              {csvResult && (
+                <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: csvResult.errors.length ? "#fef3cd" : "#d0ead0", color: csvResult.errors.length ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
+                  <strong>{csvResult.updated} aggiornate</strong>, {csvResult.skipped} saltate.
+                  {csvResult.errors.length > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
+                </div>
+              )}
+            </div>
+
+          {importLogs.length === 0
               ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessun import ancora.</p>
               : (
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -629,7 +701,29 @@ export default function AdminPage() {
             </form>
           )}
         </div>
-      </main>
+          {/* Blocca date */}
+          <div style={{ marginTop: 24 }}>
+            <button onClick={() => setBlockOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
+              <span style={{ fontSize: 18 }}>{blockOpen ? "−" : "+"}</span>
+              Blocca date
+            </button>
+            {blockOpen && (
+              <form onSubmit={handleBlockSubmit} style={{ marginTop: 12, background: c.sabbia, borderRadius: 6, padding: "20px 24px", display: "flex", flexWrap: "wrap", gap: "16px 24px", alignItems: "flex-end" }}>
+                <div>
+                  <label style={lbl}>Arrivo</label>
+                  <input type="date" required value={blockForm.check_in} onChange={e => setBlockForm(f => ({ ...f, check_in: e.target.value }))} style={{ ...inp, width: 160 }} />
+                </div>
+                <div>
+                  <label style={lbl}>Partenza</label>
+                  <input type="date" required value={blockForm.check_out} onChange={e => setBlockForm(f => ({ ...f, check_out: e.target.value }))} style={{ ...inp, width: 160 }} />
+                </div>
+                <button type="submit" disabled={blockSaving} style={{ padding: "10px 24px", background: "#555", color: "#fff", border: "none", borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: blockSaving ? "default" : "pointer", opacity: blockSaving ? 0.6 : 1 }}>
+                  {blockSaving ? "Salvo…" : "Blocca"}
+                </button>
+              </form>
+            )}
+          </div>
+        </main>
 
       {/* ════════════════════════════════════════════════════════════
           MODALE DETTAGLIO

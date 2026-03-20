@@ -4,6 +4,41 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 22 — Source of truth calendario RS Central)
+
+### Fix 2 — `app/api/sync-calendar/route.ts`
+- Filtro rumore iCal: scarta eventi > 60 notti, summary noise (not available / closed / blocked / reserved), summary vuoto + durata > 30n
+- Match primario per `check_in + check_out + property_id` (non più solo uid_ical)
+- Se trovato con `guest_id` → skip (prenotazione già arricchita da email import, non toccare)
+- Se trovato senza guest → aggiorna `uid_ical` se mancante, conta come skippato
+- Canali normalizzati lowercase (`airbnb`, `booking`)
+- Nuove prenotazioni inserite con `booking_type: 'booking'`
+
+### Fix 3 — Admin legge solo da Supabase
+- Già verificato: il calendario /admin legge esclusivamente da `bookings` via Supabase
+- Il pulsante "Sincronizza" chiama `/api/sync-calendar` → upsert Supabase → UI aggiorna da DB
+
+### Fix 4 — `booking_type` in bookings
+- Migrazione: `supabase/migrations/20260320_booking_type.sql` — `ALTER TABLE bookings ADD COLUMN booking_type text DEFAULT 'booking'`
+- Blocchi manuali (`booking_type = 'block'`) appaiono grigio scuro nel calendario con label "Blocco"
+- Form "Blocca date" collassabile in RS Central (sotto il form prenotazione manuale)
+- Blocchi esclusi da tab Prenotazioni e da `sortedBookings`
+
+### Fix 5 — UI lista prenotazioni
+- Ospite senza nome → "Ospite non identificato" in grigio italico
+- Nuova colonna "Lordo" con `gross_amount` (€ XX o "—")
+- Filtro `booking_type !== 'block'` su `sortedBookings`
+
+### Fix 6 — Import storico CSV
+- Nuova route `/api/import-csv`: parser CSV flessibile (IT/EN, `,` e `;`, date DD/MM/YYYY e ISO)
+- Sezione "Import storico CSV" nel tab Import Log: file picker `.csv`, esito con contatore aggiornate/saltate/errori
+- Aggiorna `guest_name` (crea guest se mancante), `ota_booking_ref`, `gross_amount` sulle prenotazioni esistenti
+
+### Database
+- Esegui manualmente in Supabase SQL Editor: `supabase/migrations/20260320_booking_type.sql`
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 21 — Import automatico prenotazioni via email)
 
 ### `/api/email-import/route.ts` — Nuovo endpoint
