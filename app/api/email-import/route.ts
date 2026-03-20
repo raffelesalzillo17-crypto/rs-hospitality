@@ -123,6 +123,16 @@ function parseAirbnb(bodyHtml: string): ParsedBooking {
     }
   }
 
+  // Fallback: se c'è solo check-in e il testo dice "x N notte/i", calcola check-out
+  if (dates.length === 1) {
+    const nightMatch = text.match(/x\s*(\d+)\s*nott/i);
+    if (nightMatch) {
+      const d = new Date(dates[0] + 'T00:00:00');
+      d.setDate(d.getDate() + parseInt(nightMatch[1], 10));
+      dates.push(d.toISOString().slice(0, 10));
+    }
+  }
+
   if (dates.length < 2) throw new Error(`Date non trovate in email Airbnb. Trovate: ${dates.join(', ')}`);
   const [check_in, check_out] = dates.sort();
 
