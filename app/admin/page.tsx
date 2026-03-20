@@ -63,6 +63,30 @@ function fmt(dateStr: string) {
   return `${d}/${m}/${y}`;
 }
 
+const ICAL_NOISE = new Set([
+  "reserved",
+  "airbnb (not available)",
+  "closed - not available",
+  "not available",
+]);
+
+function fmtNote(note: string | null) {
+  if (!note) return "";
+  return ICAL_NOISE.has(note.toLowerCase().trim()) ? "" : note;
+}
+
+const CHANNEL_LABEL: Record<string, string> = {
+  airbnb:  "Airbnb",
+  booking: "Booking",
+  diretto: "Diretto",
+  direct:  "Diretto",
+  whatsapp:"WhatsApp",
+};
+
+function fmtChannel(ch: string) {
+  return CHANNEL_LABEL[ch.toLowerCase()] ?? ch;
+}
+
 function notti(arrivo: string, partenza: string) {
   const ms = new Date(partenza).getTime() - new Date(arrivo).getTime();
   const n = Math.round(ms / 86_400_000);
@@ -342,7 +366,7 @@ export default function AdminPage() {
                         <td style={{ padding: "12px 14px", textAlign: "center" }}>
                           {b.num_guests}
                         </td>
-                        <td style={{ padding: "12px 14px" }}>{b.channel}</td>
+                        <td style={{ padding: "12px 14px" }}>{fmtChannel(b.channel)}</td>
                         <td style={{ padding: "12px 14px" }}>
                           <span style={{
                             display: "inline-block",
@@ -358,7 +382,7 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td style={{ padding: "12px 14px", color: "#6b5e4e", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {b.notes ?? ""}
+                          {fmtNote(b.notes) || <span style={{ color: c.sabbia }}>—</span>}
                         </td>
                         <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                           {copiedId === b.id ? (

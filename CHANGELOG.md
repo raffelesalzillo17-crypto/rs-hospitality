@@ -4,6 +4,14 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 17 — fix note iCal e normalizzazione canale nel pannello admin)
+
+### Admin (`app/admin/page.tsx`)
+- **Colonna Note**: filtrate stringhe grezze iCal ("Reserved", "Airbnb (Not available)", "CLOSED - Not available") → mostrate come "—"
+- **Colonna Canale**: normalizzazione visualizzazione — "direct"/"diretto"→"Diretto", "airbnb"→"Airbnb", "booking"→"Booking" tramite `fmtChannel()`
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 16 — unificazione schema: bookings unica fonte di verità)
 
 ### Migrazione dati
