@@ -15,6 +15,11 @@ const c = {
   sabbia: "#D4C9B5",
 } as const;
 
+type Property = {
+  id: string;
+  name: string;
+};
+
 type Booking = {
   id: string;
   check_in: string;
@@ -53,9 +58,8 @@ const emptyForm = {
   channel:      "Diretto" as (typeof CHANNELS)[number],
   notes:        "",
   status:       "pending" as (typeof STATUSES)[number],
+  property_id:  "",
 };
-
-const TULIPANO_ID = "0e16fce0-07d7-47eb-a44b-b4e239ec2cd4";
 
 function fmt(dateStr: string) {
   if (!dateStr) return "—";
@@ -104,6 +108,7 @@ export default function AdminPage() {
   const [syncing, setSyncing]       = useState(false);
   const [syncResult, setSyncResult] = useState<{ sincronizzati: number; skippati: number; errori: string[] } | null>(null);
   const [copiedId, setCopiedId]     = useState<string | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
 
   async function handleSync() {
     setSyncing(true);
@@ -132,7 +137,20 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  useEffect(() => {
+    fetchBookings();
+    supabase
+      .from("properties")
+      .select("id, name")
+      .eq("active", true)
+      .order("name")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setProperties(data);
+          setForm(f => ({ ...f, property_id: data[0].id }));
+        }
+      });
+  }, [fetchBookings]);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -158,7 +176,7 @@ export default function AdminPage() {
     // 2 — inserisci prenotazione
     const { error: bookErr } = await supabase.from("bookings").insert({
       guest_id:    guest.id,
-      property_id: TULIPANO_ID,
+      property_id: form.property_id || null,
       check_in:    form.check_in,
       check_out:   form.check_out,
       num_guests:  parseInt(form.num_guests, 10),
@@ -435,6 +453,14 @@ export default function AdminPage() {
               gap: "20px 28px",
             }}
           >
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={labelStyle}>Alloggio</label>
+              <select name="property_id" value={form.property_id} onChange={handleChange} style={inputStyle} required>
+                {properties.length === 0 && <option value="">Caricamento…</option>}
+                {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+
             <div>
               <label style={labelStyle}>Nome ospite</label>
               <input name="nome_ospite" value={form.nome_ospite} onChange={handleChange} required placeholder="Mario Rossi" style={inputStyle} />

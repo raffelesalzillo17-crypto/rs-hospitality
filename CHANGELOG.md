@@ -4,6 +4,15 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 18 — select Alloggio dinamica nel form admin)
+
+### Admin (`app/admin/page.tsx`)
+- **Campo SELECT "Alloggio"** come primo campo del form: carica properties attive da Supabase (`active=true`)
+- Default automatico sulla prima property disponibile al caricamento
+- `property_id` dal form usato al submit (non più hardcoded `TULIPANO_ID`)
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 17 — fix note iCal e normalizzazione canale nel pannello admin)
 
 ### Admin (`app/admin/page.tsx`)
