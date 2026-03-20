@@ -87,9 +87,9 @@ function parseAirbnb(bodyHtml: string): ParsedBooking {
   // Nome ospite — pattern "XXX arriverà" oppure testo prima del codice
   let guest_name = '';
   const namePatterns = [
-    /([A-ZÀ-Ú][a-zA-ZÀ-Ú\s'-]+?)\s+arriverà/,
+    /([A-ZÀ-Úa-zà-ú][a-zA-ZÀ-Úà-ú\s'-]+?)\s+arriver[aà]/i,
     /Ospite[:\s]+([^\n<]+)/i,
-    /Ciao,\s+([A-ZÀ-Ú][a-zA-ZÀ-Ú\s'-]+?)[,\n]/,
+    /Ciao,\s+([A-ZÀ-Úa-zà-ú][a-zA-ZÀ-Úà-ú\s'-]+?)[,\n]/i,
   ];
   for (const pat of namePatterns) {
     const m = text.match(pat);
@@ -128,8 +128,8 @@ function parseAirbnb(bodyHtml: string): ParsedBooking {
 
   // Importo — "50,00 € x 1 notte" o "€ 50,00"
   let gross_amount: number | null = null;
-  const amtMatch = text.match(/([\d.,]+)\s*€\s*x\s*\d+\s*nott/i)
-    ?? text.match(/€\s*([\d.,]+)/);
+  const amtMatch = text.match(/([\d.,]+)\s*(?:€|euro)\s*x\s*\d+\s*nott/i)
+    ?? text.match(/(?:€|euro)\s*([\d.,]+)/i);
   if (amtMatch) gross_amount = parseAmount(amtMatch[1]);
 
   return { guest_name, check_in, check_out, gross_amount, ota_booking_ref, channel: 'airbnb' };
