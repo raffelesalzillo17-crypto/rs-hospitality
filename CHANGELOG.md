@@ -4,6 +4,25 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 13 — pagina benvenuto dinamica da Supabase)
+
+### Database — properties
+- **4 nuove colonne**: `contact_onsite_name`, `contact_onsite_phone`, `wifi_name`, `wifi_password`
+- **Il Tulipano aggiornato**: Lella (339 430 4429) come referente in loco; wifi null (da aggiungere)
+- SQL di migrazione aggiornato in `supabase/migrations/20260320_schema_rs_hospitality.sql`
+- ⚠️ **Richiede esecuzione manuale** in Supabase SQL Editor (ALTER TABLE)
+
+### `/checkin/[id]/benvenuto` — refactor completo
+- Diventa async server component: legge `bookings.property_id` → `properties`
+- **Wi-Fi dinamico**: mostra `wifi_name` / `wifi_password` se presenti, altrimenti "Disponibile all'arrivo"
+- **Contatti dinamici** da DB, in ordine:
+  1. Referente sul posto (`contact_onsite_name` + `contact_onsite_phone`) — se presente
+  2. RS Hospitality — Raffaele +39 366 103 3691 (sempre presente)
+- Indirizzo e città letti da `properties.address` / `properties.city`
+- Zero valori hardcoded (Raffaele è l'unico fisso per design — è il proprietario)
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 12 — Mini-App Ospite: check-in digitale)
 
 ### Nuove pagine

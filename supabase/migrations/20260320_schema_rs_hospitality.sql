@@ -86,6 +86,15 @@ CREATE TABLE IF NOT EXISTS payments (
 -- ============================================================
 -- Record di test: Il Tulipano
 -- ============================================================
+-- Colonne aggiuntive properties (aggiornamento 2026-03-20)
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS contact_onsite_name  text;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS contact_onsite_phone text;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS wifi_name            text;
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS wifi_password        text;
+
+-- ============================================================
+-- Record di test: Il Tulipano
+-- ============================================================
 INSERT INTO properties (name, category, address, city, price_min, price_max, airbnb_url, booking_url, ical_airbnb, ical_booking, active)
 VALUES (
   'Il Tulipano',
@@ -101,3 +110,11 @@ VALUES (
   true
 )
 ON CONFLICT DO NOTHING;
+
+UPDATE properties
+SET
+  contact_onsite_name  = 'Lella',
+  contact_onsite_phone = '3394304429',
+  wifi_name            = NULL,
+  wifi_password        = NULL
+WHERE name = 'Il Tulipano';
