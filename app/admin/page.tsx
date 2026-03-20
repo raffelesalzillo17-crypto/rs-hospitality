@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const c = {
   tabacco: "#2C2416",
@@ -10,38 +15,47 @@ const c = {
   sabbia: "#D4C9B5",
 } as const;
 
-type Prenotazione = {
-  id: number;
-  data_arrivo: string;
-  data_partenza: string;
-  num_ospiti: number;
-  canale: string;
-  note: string | null;
-  stato: string;
+type Booking = {
+  id: string;
+  check_in: string;
+  check_out: string;
+  num_guests: number;
+  channel: string;
+  notes: string | null;
+  status: string;
   created_at: string;
-  ospiti: { nome: string; telefono: string } | null;
-  alloggi: { nome: string } | null;
+  guest_id: string | null;
+  guests: { full_name: string; phone: string | null } | null;
+  properties: { name: string } | null;
 };
 
-const CANALI = ["Airbnb", "Booking", "Diretto", "WhatsApp"] as const;
-const STATI = ["in attesa", "confermata", "cancellata"] as const;
+const CHANNELS = ["Airbnb", "Booking", "Diretto", "WhatsApp"] as const;
+const STATUSES = ["pending", "confirmed", "cancelled"] as const;
 
-const STATO_STYLE: Record<string, { bg: string; color: string }> = {
-  confermata:   { bg: "#d0ead0", color: "#1a4d1a" },
-  "in attesa":  { bg: "#fef3cd", color: "#6b4c00" },
-  cancellata:   { bg: "#fad7d7", color: "#7a1a1a" },
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  confirmed: { bg: "#d0ead0", color: "#1a4d1a" },
+  pending:   { bg: "#fef3cd", color: "#6b4c00" },
+  cancelled: { bg: "#fad7d7", color: "#7a1a1a" },
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  confirmed: "confermata",
+  pending:   "in attesa",
+  cancelled: "cancellata",
 };
 
 const emptyForm = {
-  nome_ospite: "",
-  telefono: "",
-  data_arrivo: "",
-  data_partenza: "",
-  num_ospiti: "2",
-  canale: "Diretto" as (typeof CANALI)[number],
-  note: "",
-  stato: "in attesa" as (typeof STATI)[number],
+  nome_ospite:  "",
+  telefono:     "",
+  check_in:     "",
+  check_out:    "",
+  num_guests:   "2",
+  channel:      "Diretto" as (typeof CHANNELS)[number],
+  notes:        "",
+  status:       "pending" as (typeof STATUSES)[number],
 };
+
+const TULIPANO_ID = "0e16fce0-07d7-47eb-a44b-b4e239ec2cd4";
 
 function fmt(dateStr: string) {
   if (!dateStr) return "—";
@@ -56,16 +70,16 @@ function notti(arrivo: string, partenza: string) {
 }
 
 export default function AdminPage() {
-  const [prenotazioni, setPrenotazioni] = useState<Prenotazione[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [dbError, setDbError]   = useState<string | null>(null);
-  const [form, setForm]         = useState(emptyForm);
-  const [saving, setSaving]     = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [saved, setSaved]       = useState(false);
-  const [syncing, setSyncing]   = useState(false);
+  const [bookings, setBookings]     = useState<Booking[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [dbError, setDbError]       = useState<string | null>(null);
+  const [form, setForm]             = useState(emptyForm);
+  const [saving, setSaving]         = useState(false);
+  const [formError, setFormError]   = useState<string | null>(null);
+  const [saved, setSaved]           = useState(false);
+  const [syncing, setSyncing]       = useState(false);
   const [syncResult, setSyncResult] = useState<{ sincronizzati: number; skippati: number; errori: string[] } | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId]     = useState<string | null>(null);
 
   async function handleSync() {
     setSyncing(true);
@@ -74,7 +88,7 @@ export default function AdminPage() {
       const res = await fetch("/api/sync-calendar");
       const data = await res.json();
       setSyncResult(data);
-      await fetchPrenotazioni();
+      await fetchBookings();
     } catch (e) {
       setSyncResult({ sincronizzati: 0, skippati: 0, errori: [(e as Error).message] });
     } finally {
@@ -82,19 +96,19 @@ export default function AdminPage() {
     }
   }
 
-  const fetchPrenotazioni = useCallback(async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     setDbError(null);
     const { data, error } = await supabase
-      .from("prenotazioni")
-      .select("*, ospiti(*), alloggi(*)")
-      .order("data_arrivo", { ascending: false });
+      .from("bookings")
+      .select("*, guests(full_name, phone), properties(name)")
+      .order("check_in", { ascending: false });
     if (error) setDbError(error.message);
-    else setPrenotazioni(data ?? []);
+    else setBookings((data ?? []) as Booking[]);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchPrenotazioni(); }, [fetchPrenotazioni]);
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -109,42 +123,35 @@ export default function AdminPage() {
     setSaved(false);
 
     // 1 — inserisci ospite
-    const { data: ospite, error: ospiteErr } = await supabase
-      .from("ospiti")
-      .insert({ nome: form.nome_ospite.trim(), telefono: form.telefono.trim() })
+    const { data: guest, error: guestErr } = await supabase
+      .from("guests")
+      .insert({ full_name: form.nome_ospite.trim(), phone: form.telefono.trim() || null })
       .select()
       .single();
 
-    if (ospiteErr) {
-      setFormError(ospiteErr.message);
-      setSaving(false);
-      return;
-    }
+    if (guestErr) { setFormError(guestErr.message); setSaving(false); return; }
 
     // 2 — inserisci prenotazione
-    const { error: prenotErr } = await supabase.from("prenotazioni").insert({
-      ospite_id:     ospite.id,
-      data_arrivo:   form.data_arrivo,
-      data_partenza: form.data_partenza,
-      num_ospiti:    parseInt(form.num_ospiti, 10),
-      canale:        form.canale,
-      note:          form.note.trim() || null,
-      stato:         form.stato,
+    const { error: bookErr } = await supabase.from("bookings").insert({
+      guest_id:    guest.id,
+      property_id: TULIPANO_ID,
+      check_in:    form.check_in,
+      check_out:   form.check_out,
+      num_guests:  parseInt(form.num_guests, 10),
+      channel:     form.channel,
+      notes:       form.notes.trim() || null,
+      status:      form.status,
     });
 
-    if (prenotErr) {
-      setFormError(prenotErr.message);
-      setSaving(false);
-      return;
-    }
+    if (bookErr) { setFormError(bookErr.message); setSaving(false); return; }
 
     setForm(emptyForm);
     setSaved(true);
     setSaving(false);
-    await fetchPrenotazioni();
+    await fetchBookings();
   }
 
-  function copyCheckinLink(id: number) {
+  function copyCheckinLink(id: string) {
     navigator.clipboard.writeText(`https://rs-hospitality.vercel.app/checkin/${id}`);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -216,7 +223,7 @@ export default function AdminPage() {
             {syncing ? "Sincronizzazione..." : "⟳ Sincronizza calendario"}
           </button>
           <button
-            onClick={fetchPrenotazioni}
+            onClick={fetchBookings}
             style={{
               padding: "8px 18px",
               border: `1px solid ${c.cammello}`,
@@ -253,7 +260,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px", display: "flex", flexDirection: "column", gap: 48 }}>
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px", display: "flex", flexDirection: "column", gap: 48 }}>
 
         {/* ── SEZIONE LISTA ── */}
         <section>
@@ -261,9 +268,7 @@ export default function AdminPage() {
             Prenotazioni
           </h2>
 
-          {loading && (
-            <p style={{ color: c.cammello, fontSize: 14 }}>Caricamento...</p>
-          )}
+          {loading && <p style={{ color: c.cammello, fontSize: 14 }}>Caricamento...</p>}
 
           {dbError && (
             <div style={{ padding: "12px 16px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13, marginBottom: 16 }}>
@@ -271,11 +276,11 @@ export default function AdminPage() {
             </div>
           )}
 
-          {!loading && !dbError && prenotazioni.length === 0 && (
+          {!loading && !dbError && bookings.length === 0 && (
             <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione trovata.</p>
           )}
 
-          {!loading && prenotazioni.length > 0 && (
+          {!loading && bookings.length > 0 && (
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
@@ -297,80 +302,92 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {prenotazioni.map((p, i) => (
-                    <tr
-                      key={p.id}
-                      style={{
-                        borderBottom: `1px solid ${c.sabbia}`,
-                        background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)",
-                      }}
-                    >
-                      <td style={{ padding: "12px 14px", fontWeight: 500 }}>
-                        {p.ospiti?.nome ?? "—"}
-                      </td>
-                      <td style={{ padding: "12px 14px", color: c.cammello }}>
-                        {p.ospiti?.telefono ?? "—"}
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        {p.alloggi?.nome ?? <span style={{ color: c.sabbia }}>—</span>}
-                      </td>
-                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                        {fmt(p.data_arrivo)}
-                      </td>
-                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                        {fmt(p.data_partenza)}
-                      </td>
-                      <td style={{ padding: "12px 14px", color: c.cammello, textAlign: "center" }}>
-                        {notti(p.data_arrivo, p.data_partenza)}
-                      </td>
-                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                        {p.num_ospiti}
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>{p.canale}</td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{
-                          display: "inline-block",
-                          padding: "3px 10px",
-                          borderRadius: 20,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          letterSpacing: "0.04em",
-                          background: STATO_STYLE[p.stato]?.bg ?? c.sabbia,
-                          color: STATO_STYLE[p.stato]?.color ?? c.tabacco,
-                        }}>
-                          {p.stato}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 14px", color: "#6b5e4e", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {p.note ?? ""}
-                      </td>
-                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                        {copiedId === p.id ? (
-                          <span style={{ fontSize: 12, color: "#1a4d1a", fontWeight: 600 }}>Copiato!</span>
-                        ) : p.ospiti !== null ? (
-                          <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>Check-in completato</span>
-                        ) : (
-                          <button
-                            onClick={() => copyCheckinLink(p.id)}
-                            style={{
-                              padding: "5px 12px",
-                              background: c.cammello,
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              fontFamily: "inherit",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              letterSpacing: "0.03em",
-                            }}
-                          >
-                            Link check-in
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {bookings.map((b, i) => {
+                    const guestName = Array.isArray(b.guests)
+                      ? b.guests[0]?.full_name
+                      : b.guests?.full_name;
+                    const guestPhone = Array.isArray(b.guests)
+                      ? b.guests[0]?.phone
+                      : b.guests?.phone;
+                    const propName = Array.isArray(b.properties)
+                      ? b.properties[0]?.name
+                      : b.properties?.name;
+
+                    return (
+                      <tr
+                        key={b.id}
+                        style={{
+                          borderBottom: `1px solid ${c.sabbia}`,
+                          background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)",
+                        }}
+                      >
+                        <td style={{ padding: "12px 14px", fontWeight: 500 }}>
+                          {guestName ?? <span style={{ color: c.sabbia }}>—</span>}
+                        </td>
+                        <td style={{ padding: "12px 14px", color: c.cammello }}>
+                          {guestPhone ?? "—"}
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          {propName ?? <span style={{ color: c.sabbia }}>—</span>}
+                        </td>
+                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          {fmt(b.check_in)}
+                        </td>
+                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          {fmt(b.check_out)}
+                        </td>
+                        <td style={{ padding: "12px 14px", color: c.cammello, textAlign: "center" }}>
+                          {notti(b.check_in, b.check_out)}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                          {b.num_guests}
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>{b.channel}</td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <span style={{
+                            display: "inline-block",
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            letterSpacing: "0.04em",
+                            background: STATUS_STYLE[b.status]?.bg ?? c.sabbia,
+                            color: STATUS_STYLE[b.status]?.color ?? c.tabacco,
+                          }}>
+                            {STATUS_LABEL[b.status] ?? b.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 14px", color: "#6b5e4e", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {b.notes ?? ""}
+                        </td>
+                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          {copiedId === b.id ? (
+                            <span style={{ fontSize: 12, color: "#1a4d1a", fontWeight: 600 }}>Copiato!</span>
+                          ) : b.guest_id !== null ? (
+                            <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>Check-in completato</span>
+                          ) : (
+                            <button
+                              onClick={() => copyCheckinLink(b.id)}
+                              style={{
+                                padding: "5px 12px",
+                                background: c.cammello,
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                fontFamily: "inherit",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                letterSpacing: "0.03em",
+                              }}
+                            >
+                              Link check-in
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -394,116 +411,54 @@ export default function AdminPage() {
               gap: "20px 28px",
             }}
           >
-            {/* Nome ospite */}
             <div>
               <label style={labelStyle}>Nome ospite</label>
-              <input
-                name="nome_ospite"
-                value={form.nome_ospite}
-                onChange={handleChange}
-                required
-                placeholder="Mario Rossi"
-                style={inputStyle}
-              />
+              <input name="nome_ospite" value={form.nome_ospite} onChange={handleChange} required placeholder="Mario Rossi" style={inputStyle} />
             </div>
 
-            {/* Telefono */}
             <div>
               <label style={labelStyle}>Telefono</label>
-              <input
-                name="telefono"
-                value={form.telefono}
-                onChange={handleChange}
-                placeholder="+39 333 1234567"
-                style={inputStyle}
-              />
+              <input name="telefono" value={form.telefono} onChange={handleChange} placeholder="+39 333 1234567" style={inputStyle} />
             </div>
 
-            {/* Data arrivo */}
             <div>
               <label style={labelStyle}>Data arrivo</label>
-              <input
-                type="date"
-                name="data_arrivo"
-                value={form.data_arrivo}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-              />
+              <input type="date" name="check_in" value={form.check_in} onChange={handleChange} required style={inputStyle} />
             </div>
 
-            {/* Data partenza */}
             <div>
               <label style={labelStyle}>Data partenza</label>
-              <input
-                type="date"
-                name="data_partenza"
-                value={form.data_partenza}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-              />
+              <input type="date" name="check_out" value={form.check_out} onChange={handleChange} required style={inputStyle} />
             </div>
 
-            {/* Numero ospiti */}
             <div>
               <label style={labelStyle}>Numero ospiti</label>
-              <select
-                name="num_ospiti"
-                value={form.num_ospiti}
-                onChange={handleChange}
-                style={inputStyle}
-              >
+              <select name="num_guests" value={form.num_guests} onChange={handleChange} style={inputStyle}>
                 {[1, 2, 3].map((n) => (
                   <option key={n} value={n}>{n} ospite{n > 1 ? "i" : ""}</option>
                 ))}
               </select>
             </div>
 
-            {/* Canale */}
             <div>
               <label style={labelStyle}>Canale</label>
-              <select
-                name="canale"
-                value={form.canale}
-                onChange={handleChange}
-                style={inputStyle}
-              >
-                {CANALI.map((ch) => (
-                  <option key={ch} value={ch}>{ch}</option>
-                ))}
+              <select name="channel" value={form.channel} onChange={handleChange} style={inputStyle}>
+                {CHANNELS.map((ch) => <option key={ch} value={ch}>{ch}</option>)}
               </select>
             </div>
 
-            {/* Stato */}
             <div>
               <label style={labelStyle}>Stato</label>
-              <select
-                name="stato"
-                value={form.stato}
-                onChange={handleChange}
-                style={inputStyle}
-              >
-                {STATI.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+              <select name="status" value={form.status} onChange={handleChange} style={inputStyle}>
+                {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
               </select>
             </div>
 
-            {/* Note — full width */}
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={labelStyle}>Note</label>
-              <textarea
-                name="note"
-                value={form.note}
-                onChange={handleChange}
-                rows={3}
-                placeholder="Check-in tardivo, richieste particolari..."
-                style={{ ...inputStyle, resize: "vertical" }}
-              />
+              <textarea name="notes" value={form.notes} onChange={handleChange} rows={3} placeholder="Check-in tardivo, richieste particolari..." style={{ ...inputStyle, resize: "vertical" }} />
             </div>
 
-            {/* Feedback */}
             {formError && (
               <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13 }}>
                 Errore: {formError}
@@ -515,7 +470,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Submit — full width */}
             <div style={{ gridColumn: "1 / -1" }}>
               <button
                 type="submit"

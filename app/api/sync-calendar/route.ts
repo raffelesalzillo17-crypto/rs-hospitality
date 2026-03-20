@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+const TULIPANO_ID = "0e16fce0-07d7-47eb-a44b-b4e239ec2cd4";
+
 const FEEDS = [
   {
     url: "https://www.airbnb.it/calendar/ical/1151100346729188269.ics?t=7df772bef1f3499f822c4b6270cbe231",
-    canale: "Airbnb",
+    channel: "Airbnb",
   },
   {
     url: "https://ical.booking.com/v1/export/t/28033739-d90f-4362-8f72-3cb8be1d31bc.ics",
-    canale: "Booking",
+    channel: "Booking",
   },
 ];
 
@@ -98,22 +100,21 @@ export async function GET() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       icsText = await res.text();
     } catch (e) {
-      errori.push(`${feed.canale}: fetch fallito — ${(e as Error).message}`);
+      errori.push(`${feed.channel}: fetch fallito — ${(e as Error).message}`);
       continue;
     }
 
     const events = parseVEvents(icsText);
 
     for (const ev of events) {
-      // Controlla duplicato tramite uid_ical
       const { data: existing, error: selectErr } = await supabase
-        .from("prenotazioni")
+        .from("bookings")
         .select("id")
         .eq("uid_ical", ev.uid)
         .maybeSingle();
 
       if (selectErr) {
-        errori.push(`${feed.canale} UID ${ev.uid}: select error — ${selectErr.message}`);
+        errori.push(`${feed.channel} UID ${ev.uid}: select error — ${selectErr.message}`);
         continue;
       }
 
@@ -122,18 +123,19 @@ export async function GET() {
         continue;
       }
 
-      const { error: insertErr } = await supabase.from("prenotazioni").insert({
-        data_arrivo: ev.dtstart,
-        data_partenza: ev.dtend,
-        canale: feed.canale,
-        stato: "confermata",
-        note: ev.summary || null,
-        uid_ical: ev.uid,
-        num_ospiti: 1, // sconosciuto da iCal, default 1
+      const { error: insertErr } = await supabase.from("bookings").insert({
+        property_id:  TULIPANO_ID,
+        check_in:     ev.dtstart,
+        check_out:    ev.dtend,
+        channel:      feed.channel,
+        status:       "confirmed",
+        notes:        ev.summary || null,
+        uid_ical:     ev.uid,
+        num_guests:   1,
       });
 
       if (insertErr) {
-        errori.push(`${feed.canale} UID ${ev.uid}: insert error — ${insertErr.message}`);
+        errori.push(`${feed.channel} UID ${ev.uid}: insert error — ${insertErr.message}`);
       } else {
         sincronizzati++;
       }

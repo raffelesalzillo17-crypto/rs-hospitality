@@ -4,6 +4,26 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 16 — unificazione schema: bookings unica fonte di verità)
+
+### Migrazione dati
+- 11 record migrati da `prenotazioni` → `bookings` (stessi UUID, property_id Il Tulipano)
+- Mapping colonne: data_arrivo→check_in, data_partenza→check_out, canale→channel, stato→status, note→notes, num_ospiti→num_guests
+- `bookings` ora ha 13 record totali (11 iCal + 2 test manuali)
+- ⚠️ `DROP TABLE prenotazioni` da eseguire manualmente in Supabase SQL Editor
+
+### Admin (`app/admin/page.tsx`)
+- Legge da `bookings` invece di `prenotazioni` — adattati tutti i campi al nuovo schema
+- `id` ora UUID stringa (non più intero), pulsante Link check-in usa UUID corretto
+- Join con `guests(full_name, phone)` e `properties(name)`
+- Stato visualizzato in italiano (confirmed→confermata, pending→in attesa, cancelled→cancellata)
+
+### API (`app/api/sync-calendar/route.ts`)
+- Sincronizzazione scrive su `bookings` invece di `prenotazioni`
+- Campi aggiornati al nuovo schema (channel, status, check_in, check_out, num_guests)
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 15 — pulsante Link check-in nel pannello admin)
 
 ### Admin (`app/admin/page.tsx`)
