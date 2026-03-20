@@ -4,6 +4,31 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 21 — Import automatico prenotazioni via email)
+
+### `/api/email-import/route.ts` — Nuovo endpoint
+- Autenticazione tramite header `X-RS-Secret` (var `EMAIL_IMPORT_SECRET`)
+- Routing per mittente: `airbnb.com` → parser HTML, `booking.com` / PDF allegato → parser PDF
+- **Parser Airbnb** (`pdf-parse` + `cheerio`): estrae nome ospite, date (lookup mesi italiani con gestione anno), importo lordo, codice conferma
+- **Parser Booking**: decodifica PDF base64 dall'allegato, regex su testo estratto (num. prenotazione, ospite, date, prezzo)
+- **Match engine**: cerca per `ota_booking_ref` → UPDATE; fallback su `check_in + check_out` → UPDATE con ref; INSERT nuova prenotazione con guest e property attiva
+- Logging ogni chiamata su tabella `import_logs`; risponde sempre 200 per evitare retry Make
+
+### Database — `supabase/migrations/20260320_email_import.sql`
+- `ALTER TABLE bookings ADD COLUMN ota_booking_ref text`
+- `ALTER TABLE bookings ADD COLUMN gross_amount numeric`
+- `CREATE TABLE import_logs` (id, created_at, channel, from_email, subject, action, booking_ref, guest_name, error_message)
+
+### RS Central — Tab "Import Log"
+- Terza tab nell'header con refresh on-click
+- Tabella ultimi 10 import: data/ora, canale, ospite, ref OTA, azione con badge colorato (verde=created, giallo=updated, grigio=skipped, rosso=error), messaggio errore
+
+### Infrastruttura
+- Aggiunte dipendenze: `pdf-parse`, `cheerio`, `@types/pdf-parse`
+- `.env.local`: aggiunta `EMAIL_IMPORT_SECRET=rshospitality2026`
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 20 — RS Central: calendario, lista, modale)
 
 ### Admin (`app/admin/page.tsx`) — Riscrittura completa

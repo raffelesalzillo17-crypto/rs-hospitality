@@ -19,6 +19,18 @@ const c = {
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Property = { id: string; name: string };
 
+type ImportLog = {
+  id: string;
+  created_at: string;
+  channel: string | null;
+  from_email: string | null;
+  subject: string | null;
+  action: string | null;
+  booking_ref: string | null;
+  guest_name: string | null;
+  error_message: string | null;
+};
+
 type Guest = { full_name: string; phone: string | null; email: string | null };
 
 type Booking = {
@@ -128,7 +140,7 @@ export default function AdminPage() {
   const [loading,    setLoading]    = useState(true);
   const [dbError,    setDbError]    = useState<string | null>(null);
 
-  const [activeTab,    setActiveTab]    = useState<"calendario" | "prenotazioni">("calendario");
+  const [activeTab,    setActiveTab]    = useState<"calendario" | "prenotazioni" | "import">("calendario");
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d;
   });
@@ -137,6 +149,8 @@ export default function AdminPage() {
   const [deleteConfirm,   setDeleteConfirm]   = useState(false);
   const [copiedId,        setCopiedId]        = useState<string | null>(null);
   const [editPrice,       setEditPrice]       = useState<{ id: string; value: string } | null>(null);
+
+  const [importLogs, setImportLogs] = useState<ImportLog[]>([]);
 
   const [syncing,    setSyncing]    = useState(false);
   const [syncResult, setSyncResult] = useState<{ sincronizzati: number; skippati: number; errori: string[] } | null>(null);
@@ -159,8 +173,18 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
+  const fetchImportLogs = useCallback(async () => {
+    const { data } = await supabase
+      .from("import_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setImportLogs((data ?? []) as ImportLog[]);
+  }, []);
+
   useEffect(() => {
     fetchBookings();
+    fetchImportLogs();
     supabase.from("properties").select("id, name").eq("active", true).order("name")
       .then(({ data }) => {
         if (data?.length) {
@@ -168,7 +192,7 @@ export default function AdminPage() {
           setForm(f => ({ ...f, property_id: data[0].id }));
         }
       });
-  }, [fetchBookings]);
+  }, [fetchBookings, fetchImportLogs]);
 
   // ── Sync ──────────────────────────────────────────────────────────────────
   async function handleSync() {
@@ -177,6 +201,7 @@ export default function AdminPage() {
       const res = await fetch("/api/sync-calendar");
       setSyncResult(await res.json());
       await fetchBookings();
+      await fetchImportLogs();
     } catch (e) {
       setSyncResult({ sincronizzati: 0, skippati: 0, errori: [(e as Error).message] });
     } finally { setSyncing(false); }
@@ -290,9 +315,9 @@ export default function AdminPage() {
 
       {/* ── TABS ── */}
       <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${c.sabbia}`, padding: "0 24px", background: c.lino }}>
-        {(["calendario", "prenotazioni"] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "capitalize", letterSpacing: "0.04em" }}>
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+        {(["calendario", "prenotazioni", "import"] as const).map(tab => (
+          <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "import") fetchImportLogs(); }} style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "capitalize", letterSpacing: "0.04em" }}>
+            {tab === "import" ? "Import Log" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -465,6 +490,57 @@ export default function AdminPage() {
                               : <button onClick={() => copyLink(b.id)} style={{ padding: "4px 10px", background: c.cammello, color: "#fff", border: "none", borderRadius: 4, fontSize: 12, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>Link</button>
                             }
                           </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )
+            }
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════
+            TAB: IMPORT LOG
+        ════════════════════════════════════════════════════════════ */}
+        {activeTab === "import" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: 0, letterSpacing: "-0.01em" }}>Ultimi 10 import email</h2>
+              <button onClick={fetchImportLogs} style={{ padding: "6px 14px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "none", fontSize: 12, color: c.cammello, fontFamily: "inherit", cursor: "pointer" }}>Aggiorna</button>
+            </div>
+            {importLogs.length === 0
+              ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessun import ancora.</p>
+              : (
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
+                      {["Data", "Canale", "Ospite", "Ref.", "Azione", "Errore"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importLogs.map((log, i) => {
+                      const actionStyle: Record<string, { bg: string; color: string }> = {
+                        created: { bg: "#d0ead0", color: "#1a4d1a" },
+                        updated: { bg: "#fef3cd", color: "#6b4c00" },
+                        skipped: { bg: "#e8e8e8", color: "#555" },
+                        error:   { bg: "#fad7d7", color: "#7a1a1a" },
+                      };
+                      const style = actionStyle[log.action ?? ""] ?? { bg: c.sabbia, color: c.tabacco };
+                      const dt = log.created_at ? new Date(log.created_at) : null;
+                      const dateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")} ${dt.getHours().toString().padStart(2,"0")}:${dt.getMinutes().toString().padStart(2,"0")}` : "—";
+                      return (
+                        <tr key={log.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)" }}>
+                          <td style={{ padding: "10px 12px", whiteSpace: "nowrap", color: c.cammello, fontSize: 12 }}>{dateStr}</td>
+                          <td style={{ padding: "10px 12px", textTransform: "capitalize" }}>{log.channel ?? "—"}</td>
+                          <td style={{ padding: "10px 12px" }}>{log.guest_name ?? "—"}</td>
+                          <td style={{ padding: "10px 12px", fontFamily: "monospace", fontSize: 12, color: c.cammello }}>{log.booking_ref ?? "—"}</td>
+                          <td style={{ padding: "10px 12px" }}>
+                            <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: style.bg, color: style.color }}>{log.action ?? "—"}</span>
+                          </td>
+                          <td style={{ padding: "10px 12px", fontSize: 12, color: "#7a1a1a", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={log.error_message ?? ""}>{log.error_message ?? ""}</td>
                         </tr>
                       );
                     })}
