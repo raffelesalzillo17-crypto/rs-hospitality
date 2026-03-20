@@ -16,13 +16,17 @@ const c = {
   sabbia:  "#D4C9B5",
 } as const;
 
+type BookingProperty = {
+  name: string;
+};
+
 type Booking = {
   id: string;
   check_in: string;
   check_out: string;
   num_guests: number;
   guest_id: string | null;
-  properties: { name: string } | null;
+  properties: BookingProperty | BookingProperty[] | null;
 };
 
 const DOC_TYPES = ["Carta d'identità", "Passaporto", "Patente"] as const;
@@ -190,7 +194,7 @@ export default function CheckInPage({ params }: { params: { id: string } }) {
           </span>
           {booking.properties && (
             <span style={{ fontSize: 13, color: c.tabacco }}>
-              {booking.properties.name}
+              {Array.isArray(booking.properties) ? booking.properties[0]?.name : booking.properties.name}
             </span>
           )}
         </div>
