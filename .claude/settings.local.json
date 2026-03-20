@@ -7,7 +7,13 @@
       "Bash(npm run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(grep -E \"^lib$|^utils$\")",
+      "Bash(npm install:*)",
+      "Bash(ls C:/Users/salzi/rs-hospitality/*.md)",
+      "Bash(vercel env:*)",
+      "Bash(npx vercel:*)",
+      "Bash(kill %1)"
     ]
   }
 }

@@ -4,6 +4,21 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 8 — integrazione Supabase + pannello admin)
+
+### Infrastruttura
+- **Supabase**: installato `@supabase/supabase-js`; creato `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` (escluso da git tramite `.env*` in `.gitignore`)
+- **`lib/supabase.ts`**: client Supabase centralizzato, importabile in tutto il progetto
+
+### Admin (`app/admin/page.tsx`)
+- **Nuova pagina `/admin`**: pannello interno senza autenticazione (da proteggere in seguito)
+- **Lista prenotazioni**: tabella su sfondo lino con join `prenotazioni → ospiti → alloggi`; colonne: ospite, telefono, alloggio, arrivo, partenza, notti, n° ospiti, canale, stato (badge colorato), note; righe zebrate
+- **Badge stato**: verde (confermata), giallo (in attesa), rosso (cancellata)
+- **Form aggiunta manuale**: su sfondo sabbia, griglia 2 colonne; campi: nome ospite, telefono, data arrivo/partenza, numero ospiti (1–3), canale (Airbnb / Booking / Diretto / WhatsApp), stato, note; inserimento normalizzato — crea ospite in `ospiti` poi `prenotazioni`
+- **UX**: feedback inline successo/errore, bottone "↻ Aggiorna" in header
+
+---
+
 ## [Unreleased] — 2026-03-19 (aggiornamento 7 — revisione grafica completa)
 
 ### Design — Homepage (`app/page.tsx`)
