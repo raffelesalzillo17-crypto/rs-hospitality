@@ -4,6 +4,26 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 12 — Mini-App Ospite: check-in digitale)
+
+### Nuove pagine
+
+#### `/checkin/[id]` — Form registrazione ospite
+- Legge la prenotazione da `bookings` via ID URL; reindirizza a benvenuto se già completato
+- Form campi: nome completo, telefono, email (opzionale), tipo documento (select), numero documento, nazionalità
+- Al submit: crea record in `guests`, aggiorna `bookings.guest_id`, redirect a `/checkin/[id]/benvenuto`
+- Gestione stati: loading, not found (con link WhatsApp Raffaele), errori Supabase
+- Design mobile-first: palette RS, font Helvetica, tono discreto
+
+#### `/checkin/[id]/benvenuto` — Pagina benvenuto ospite
+- Headline "La tua dimora è pronta." (server component, noindex)
+- Card orari: check-in dalle 15:00 / check-out entro 11:00
+- Card indirizzo: Via Clanio 60, Marcianise (CE) con link Google Maps
+- Card Wi-Fi: segnaposto "disponibile all'arrivo" (da aggiornare con codice reale)
+- Card assistenza: bottone WhatsApp diretto a Raffaele +39 366 103 3691
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 11 — properties su Supabase + calendar dinamico)
 
 ### Database
