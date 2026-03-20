@@ -93,8 +93,8 @@ export default async function BenvenutoPage({ params }: { params: Promise<{ id: 
 
         {/* Orari */}
         <Section title="Orari">
-          <Row icon="🕒" label="Check-in"  value="dalle 15:00" />
-          <Row icon="🕙" label="Check-out" value="entro le 11:00" />
+          <Row label="Check-in"  value="dalle 15:00" />
+          <Row label="Check-out" value="entro le 11:00" />
         </Section>
 
         {/* Indirizzo */}
@@ -126,13 +126,13 @@ export default async function BenvenutoPage({ params }: { params: Promise<{ id: 
         <Section title="Wi-Fi">
           {hasWifi ? (
             <>
-              <Row icon="📶" label="Rete"     value={property!.wifi_name!} />
-              <Row icon="🔑" label="Password" value={property!.wifi_password!} />
+              <Row label="Rete"     value={property!.wifi_name!} />
+              <Row label="Password" value={property!.wifi_password!} />
             </>
           ) : (
             <>
-              <Row icon="📶" label="Rete"     value="Disponibile all'arrivo" />
-              <Row icon="🔑" label="Password" value="Disponibile all'arrivo" />
+              <Row label="Rete"     value="Disponibile all'arrivo" />
+              <Row label="Password" value="Disponibile all'arrivo" />
               <p style={{ fontSize: 12, color: c.cammello, margin: "0.5rem 0 0" }}>
                 Le credenziali Wi-Fi sono affisse in camera.
               </p>
@@ -210,10 +210,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({ icon, label, value }: { icon: string; label: string; value: string }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-      <span style={{ fontSize: 18, minWidth: 26, textAlign: "center" }}>{icon}</span>
       <span style={{ fontSize: 14, color: c.cammello, minWidth: 80 }}>{label}</span>
       <span style={{ fontSize: 15, color: c.tabacco, fontWeight: 500 }}>{value}</span>
     </div>

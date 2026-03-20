@@ -4,6 +4,14 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 14 — rimozione emoji da pagina benvenuto)
+
+### `/checkin/[id]/benvenuto`
+- Rimosse tutte le emoji (orologi, chiave, barre Wi-Fi) dalla pagina benvenuto
+- Componente `Row` semplificato: rimosso prop `icon` e relativo `<span>`
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 13 — pagina benvenuto dinamica da Supabase)
 
 ### Database — properties
