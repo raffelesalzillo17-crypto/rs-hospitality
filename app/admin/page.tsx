@@ -65,6 +65,7 @@ export default function AdminPage() {
   const [saved, setSaved]       = useState(false);
   const [syncing, setSyncing]   = useState(false);
   const [syncResult, setSyncResult] = useState<{ sincronizzati: number; skippati: number; errori: string[] } | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   async function handleSync() {
     setSyncing(true);
@@ -141,6 +142,12 @@ export default function AdminPage() {
     setSaved(true);
     setSaving(false);
     await fetchPrenotazioni();
+  }
+
+  function copyCheckinLink(id: number) {
+    navigator.clipboard.writeText(`https://rs-hospitality.vercel.app/checkin/${id}`);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   }
 
   // ── styles ──────────────────────────────────────────────────────────────────
@@ -273,7 +280,7 @@ export default function AdminPage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
-                    {["Ospite", "Telefono", "Alloggio", "Arrivo", "Partenza", "Notti", "Ospiti", "Canale", "Stato", "Note"].map((h) => (
+                    {["Ospite", "Telefono", "Alloggio", "Arrivo", "Partenza", "Notti", "Ospiti", "Canale", "Stato", "Note", "Check-in"].map((h) => (
                       <th key={h} style={{
                         textAlign: "left",
                         padding: "10px 14px",
@@ -336,6 +343,31 @@ export default function AdminPage() {
                       </td>
                       <td style={{ padding: "12px 14px", color: "#6b5e4e", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {p.note ?? ""}
+                      </td>
+                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                        {copiedId === p.id ? (
+                          <span style={{ fontSize: 12, color: "#1a4d1a", fontWeight: 600 }}>Copiato!</span>
+                        ) : p.ospiti !== null ? (
+                          <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>Check-in completato</span>
+                        ) : (
+                          <button
+                            onClick={() => copyCheckinLink(p.id)}
+                            style={{
+                              padding: "5px 12px",
+                              background: c.cammello,
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: 4,
+                              fontSize: 12,
+                              fontFamily: "inherit",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              letterSpacing: "0.03em",
+                            }}
+                          >
+                            Link check-in
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

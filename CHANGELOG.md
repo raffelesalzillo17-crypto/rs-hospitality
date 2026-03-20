@@ -4,6 +4,16 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 15 — pulsante Link check-in nel pannello admin)
+
+### Admin (`app/admin/page.tsx`)
+- **Nuova colonna "Check-in"** nella tabella prenotazioni
+- Se ospite non ancora registrato: pulsante **"Link check-in"** (cammello #8B7355) che copia `https://rs-hospitality.vercel.app/checkin/[id]` negli appunti
+- Se ospite già presente: testo grigio "Check-in completato"
+- Feedback visivo **"Copiato!"** per 2 secondi dopo la copia (stato `copiedId`)
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 14 — rimozione emoji da pagina benvenuto)
 
 ### `/checkin/[id]/benvenuto`
