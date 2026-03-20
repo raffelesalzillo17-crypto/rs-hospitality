@@ -4,6 +4,25 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 9 — sync iCal → Supabase)
+
+### API (`app/api/sync-calendar/route.ts`)
+- **Nuova route GET `/api/sync-calendar`**: fetcha i feed iCal di Airbnb e Booking.com server-side
+- **Parser iCal inline** (nessuna dipendenza esterna): gestisce line folding, parametri DTSTART/DTEND, estrae UID, date, summary
+- **Deduplicazione via `uid_ical`**: controlla se l'evento esiste già prima di inserire — zero duplicati
+- **Inserimento in `prenotazioni`**: `data_arrivo`, `data_partenza`, `canale` (Airbnb/Booking), `stato: confermata`, `note` (summary iCal), `uid_ical`
+- **Risposta JSON**: `{ sincronizzati: N, skippati: N, errori: [] }`
+- Usa `SUPABASE_SERVICE_ROLE_KEY` se presente, altrimenti fallback su anon key
+
+### Database
+- **Nuova colonna `uid_ical`** nella tabella `prenotazioni` — vedere SQL da eseguire in Supabase Dashboard
+
+### Admin (`app/admin/page.tsx`)
+- **Bottone "⟳ Sincronizza calendario"** in header: chiama `/api/sync-calendar`, aggiorna la lista al termine
+- **Banner risultato sync**: mostra prenotazioni importate / già presenti / errori con stile coerente alla palette RS
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 8 — integrazione Supabase + pannello admin)
 
 ### Infrastruttura

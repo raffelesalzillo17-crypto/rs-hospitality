@@ -63,6 +63,23 @@ export default function AdminPage() {
   const [saving, setSaving]     = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved]       = useState(false);
+  const [syncing, setSyncing]   = useState(false);
+  const [syncResult, setSyncResult] = useState<{ sincronizzati: number; skippati: number; errori: string[] } | null>(null);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/sync-calendar");
+      const data = await res.json();
+      setSyncResult(data);
+      await fetchPrenotazioni();
+    } catch (e) {
+      setSyncResult({ sincronizzati: 0, skippati: 0, errori: [(e as Error).message] });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const fetchPrenotazioni = useCallback(async () => {
     setLoading(true);
@@ -172,22 +189,62 @@ export default function AdminPage() {
             Pannello prenotazioni
           </h1>
         </div>
-        <button
-          onClick={fetchPrenotazioni}
-          style={{
-            padding: "8px 18px",
-            border: `1px solid ${c.cammello}`,
-            borderRadius: 3,
-            background: "transparent",
-            color: c.cammello,
-            fontSize: 13,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          ↻ Aggiorna
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            style={{
+              padding: "8px 18px",
+              border: `1px solid ${c.tabacco}`,
+              borderRadius: 3,
+              background: c.tabacco,
+              color: c.lino,
+              fontSize: 13,
+              cursor: syncing ? "default" : "pointer",
+              opacity: syncing ? 0.6 : 1,
+              fontFamily: "inherit",
+              fontWeight: 500,
+            }}
+          >
+            {syncing ? "Sincronizzazione..." : "⟳ Sincronizza calendario"}
+          </button>
+          <button
+            onClick={fetchPrenotazioni}
+            style={{
+              padding: "8px 18px",
+              border: `1px solid ${c.cammello}`,
+              borderRadius: 3,
+              background: "transparent",
+              color: c.cammello,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            ↻ Aggiorna
+          </button>
+        </div>
       </header>
+
+      {syncResult && (
+        <div style={{
+          margin: "0 32px",
+          padding: "12px 20px",
+          borderRadius: 3,
+          fontSize: 13,
+          background: syncResult.errori.length > 0 ? "#fef3cd" : "#d0ead0",
+          color: syncResult.errori.length > 0 ? "#6b4c00" : "#1a4d1a",
+          borderLeft: `4px solid ${syncResult.errori.length > 0 ? "#e6a817" : "#2e7d32"}`,
+        }}>
+          <strong>Sincronizzazione completata:</strong>{" "}
+          {syncResult.sincronizzati} nuove prenotazioni importate, {syncResult.skippati} già presenti.
+          {syncResult.errori.length > 0 && (
+            <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
+              {syncResult.errori.map((e, i) => <li key={i}>{e}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
 
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px", display: "flex", flexDirection: "column", gap: 48 }}>
 
