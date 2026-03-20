@@ -4,6 +4,23 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 19 — check-in allineato Alloggiati Web)
+
+### Database
+- **`guests`**: 8 nuove colonne Alloggiati Web — `first_name`, `last_name`, `birth_date`, `birth_place`, `gender`, `document_place`, `citizenship`, `guest_type`
+- **Nuova tabella `guest_companions`**: familiari e componenti gruppo (FK → guests + bookings, ON DELETE CASCADE)
+- File: `supabase/migrations/20260320_guests_update.sql`
+- ⚠️ Da eseguire in Supabase SQL Editor
+
+### `/checkin/[id]` — Riscrittura completa
+- **Step 1 — Dati ospite**: nome, cognome, cittadinanza, nazionalità, luogo/data nascita, sesso, telefono, email, tipo/numero/luogo documento
+- **Step 2 — Tipo ospite**: Ospite singolo / Capo famiglia / Capogruppo
+- **Step 3 — Accompagnatori** (visibile solo se capo_famiglia o capogruppo): form dinamico con aggiunta/rimozione; campi tipo, nome, cognome, cittadinanza, luogo/data nascita, sesso
+- Submit salva in `guests` (con `full_name` per retrocompatibilità), poi in `guest_companions`, poi aggiorna `bookings.guest_id`
+- Validazione campi obbligatori con messaggio dettagliato
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 18 — select Alloggio dinamica nel form admin)
 
 ### Admin (`app/admin/page.tsx`)
