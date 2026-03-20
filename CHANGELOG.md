@@ -4,6 +4,14 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 24 — Import CSV Booking.com)
+
+### `/api/import-csv/route.ts`
+- Aggiunte colonne Booking.com: `arrival`, `departure`, `reservation number`, `booker name`, `original amount`, `final amount`
+- `parseDate` gestisce ora anche formato `DD Mon YYYY` (es. "25 Mar 2026") usato da Booking.com export EN
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 23 — Fix crash import CSV)
 
 ### `/api/import-csv/route.ts`

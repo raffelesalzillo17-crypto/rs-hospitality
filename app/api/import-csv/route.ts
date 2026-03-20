@@ -35,14 +35,29 @@ function col(headers: string[], ...candidates: string[]): number {
 }
 
 // ── Converti data in ISO (supporta DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD) ───────
+const MONTHS_EN: Record<string, string> = {
+  jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",
+  jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12",
+};
+const MONTHS_IT: Record<string, string> = {
+  gen:"01",feb:"02",mar:"03",apr:"04",mag:"05",giu:"06",
+  lug:"07",ago:"08",set:"09",ott:"10",nov:"11",dic:"12",
+};
+
 function parseDate(raw: string): string | null {
   if (!raw) return null;
   raw = raw.trim().replace(/['"]/g, "");
-  // ISO
+  // ISO YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  // DD/MM/YYYY (contesto italiano)
-  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  // DD/MM/YYYY
+  const mSlash = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mSlash) return `${mSlash[3]}-${mSlash[2].padStart(2,"0")}-${mSlash[1].padStart(2,"0")}`;
+  // DD Mon YYYY  (es. "25 Mar 2026" — Booking.com EN)
+  const mWord = raw.match(/^(\d{1,2})\s+([a-zA-Z]{3,})\s+(\d{4})$/);
+  if (mWord) {
+    const mm = MONTHS_EN[mWord[2].slice(0,3).toLowerCase()] ?? MONTHS_IT[mWord[2].slice(0,3).toLowerCase()];
+    if (mm) return `${mWord[3]}-${mm}-${mWord[1].padStart(2,"0")}`;
+  }
   return null;
 }
 
@@ -76,12 +91,12 @@ export async function POST(req: NextRequest) {
   const sep     = detectSep(lines[0]);
   const headers = parseCsvLine(lines[0], sep).map(h => h.replace(/['"]/g, "").trim());
 
-  // Indici colonne Airbnb CSV (IT/EN)
-  const iRef     = col(headers, "codice di conferma", "confirmation code", "codice");
-  const iCI      = col(headers, "data di inizio", "check-in", "start date", "arrivo");
-  const iCO      = col(headers, "data di fine", "check-out", "end date", "partenza");
-  const iName    = col(headers, "nome dell'ospite", "guest name", "ospite", "nome");
-  const iAmount  = col(headers, "totale host", "payout", "importo pagato", "importo", "amount");
+  // Indici colonne — Airbnb (IT/EN) + Booking.com (EN) + Pulse/altri
+  const iRef     = col(headers, "codice di conferma", "confirmation code", "codice", "reservation number", "booking number");
+  const iCI      = col(headers, "data di inizio", "check-in", "start date", "arrivo", "arrival");
+  const iCO      = col(headers, "data di fine", "check-out", "end date", "partenza", "departure");
+  const iName    = col(headers, "nome dell'ospite", "guest name", "ospite", "nome", "booker name");
+  const iAmount  = col(headers, "totale host", "payout", "importo pagato", "importo", "amount", "original amount", "final amount");
 
   if (iCI === -1 || iCO === -1) {
     return NextResponse.json({
