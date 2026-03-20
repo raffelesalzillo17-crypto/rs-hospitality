@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
@@ -37,9 +37,9 @@ function fmt(d: string) {
   return `${day}/${m}/${y}`;
 }
 
-export default function CheckInPage({ params }: { params: { id: string } }) {
+export default function CheckInPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { id } = params;
+  const { id } = use(params);
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [notFound, setNotFound] = useState(false);
