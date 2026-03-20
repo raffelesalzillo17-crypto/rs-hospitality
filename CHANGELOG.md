@@ -4,6 +4,17 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 20 — RS Central: calendario, lista, modale)
+
+### Admin (`app/admin/page.tsx`) — Riscrittura completa
+- **Header "RS Central"**: titolo, pulsanti Sincronizza (→ `/api/sync-calendar`) e Aggiorna
+- **Tab Calendario**: card "Prossimo arrivo" (sfondo tabacco), navigazione mese ← →, griglia property-riga × giorno-colonna con barre colorate per prenotazione (verde=confirmed, giallo=pending, grigio=blocco iCal); click su barra apre modale
+- **Tab Prenotazioni**: lista ordinata (future prima, passate al 50% opacità), modifica prezzo inline al click, pulsante link check-in, click riga apre modale
+- **Modale (bottom sheet)**: dettagli ospite, griglia info prenotazione, badge stato, editor prezzo, note, copia link check-in, elimina con conferma
+- **Form collassabile**: toggle +/−, include campo `total_price`, select alloggio dinamico da Supabase
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 19 — check-in allineato Alloggiati Web)
 
 ### Database
