@@ -92,11 +92,11 @@ export async function POST(req: NextRequest) {
   const headers = parseCsvLine(lines[0], sep).map(h => h.replace(/['"]/g, "").trim());
 
   // Indici colonne — Airbnb (IT/EN) + Booking.com (EN) + Pulse/altri
-  const iRef     = col(headers, "codice di conferma", "confirmation code", "codice", "reservation number", "booking number");
-  const iCI      = col(headers, "data di inizio", "check-in", "start date", "arrivo", "arrival");
-  const iCO      = col(headers, "data di fine", "check-out", "end date", "partenza", "departure");
-  const iName    = col(headers, "nome dell'ospite", "guest name", "ospite", "nome", "booker name");
-  const iAmount  = col(headers, "totale host", "payout", "importo pagato", "importo", "amount", "original amount", "final amount");
+  const iRef     = col(headers, "numero di riferimento", "codice di conferma", "confirmation code", "codice", "reservation number", "booking number");
+  const iCI      = col(headers, "check-in", "checkin", "data di inizio", "start date", "arrivo", "arrival");
+  const iCO      = col(headers, "checkout", "check-out", "data di fine", "end date", "partenza", "departure");
+  const iName    = col(headers, "nome dell", "guest name", "booker name", "ospite", "nome");
+  const iAmount  = col(headers, "netto", "totale host", "payout", "importo pagato", "importo", "amount", "original amount", "final amount");
 
   if (iCI === -1 || iCO === -1) {
     return NextResponse.json({
@@ -104,10 +104,12 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
-  // Rileva canale dal nome della colonna ref trovata
-  const refHeader = iRef !== -1 ? headers[iRef].toLowerCase() : "";
+  // Rileva canale: Booking.com usa "reservation number", Airbnb IT usa "numero di riferimento" o "tipologia"
+  const refHeader  = iRef !== -1 ? headers[iRef].toLowerCase() : "";
+  const allHeaders = headers.join(" ").toLowerCase();
   const detectedChannel = refHeader.includes("reservation") ? "booking"
     : refHeader.includes("confirmation") || refHeader.includes("codice") ? "airbnb"
+    : refHeader.includes("numero") || allHeaders.includes("tipologia") || allHeaders.includes("netto") ? "airbnb"
     : "diretto";
 
   // Cerca property attiva una sola volta

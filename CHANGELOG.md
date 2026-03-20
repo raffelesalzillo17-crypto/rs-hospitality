@@ -4,6 +4,17 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 26 — Import CSV Airbnb IT)
+
+### `/api/import-csv/route.ts`
+- iCO: aggiunto `checkout` (senza trattino) per export Airbnb IT
+- iName: match su `nome dell` (copre "Nome dellospite" con apostrofo mancante per encoding)
+- iRef: aggiunto `numero di riferimento` (Airbnb IT)
+- iAmount: `netto` come prima priorità (Airbnb IT, è il netto host)
+- Channel detection: `tipologia` o `netto` negli headers → `airbnb`
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 25 — Import CSV: INSERT prenotazioni storiche)
 
 ### `/api/import-csv/route.ts`
