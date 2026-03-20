@@ -196,6 +196,24 @@ async function parseBooking(
   return { guest_name, check_in, check_out, gross_amount, ota_booking_ref, channel: 'booking' };
 }
 
+// ── Find or create guest ──────────────────────────────────────────────────────
+async function findOrCreateGuest(full_name: string): Promise<string | null> {
+  // Cerca per nome esatto
+  const { data: found } = await supabase
+    .from('guests')
+    .select('id')
+    .eq('full_name', full_name)
+    .maybeSingle();
+  if (found) return found.id;
+  // Crea nuovo
+  const { data: created } = await supabase
+    .from('guests')
+    .insert({ full_name })
+    .select('id')
+    .single();
+  return created?.id ?? null;
+}
+
 // ── Match engine ──────────────────────────────────────────────────────────────
 async function matchOrInsert(parsed: ParsedBooking): Promise<{ action: string; booking: Record<string, unknown> }> {
   // 1. Cerca per ota_booking_ref
@@ -206,14 +224,14 @@ async function matchOrInsert(parsed: ParsedBooking): Promise<{ action: string; b
     .maybeSingle();
 
   if (existing) {
+    const guestId = existing.guest_id
+      ? (await supabase.from('guests').update({ full_name: parsed.guest_name }).eq('id', existing.guest_id), existing.guest_id)
+      : await findOrCreateGuest(parsed.guest_name);
     await supabase.from('bookings').update({
       gross_amount: parsed.gross_amount,
       channel: parsed.channel,
+      guest_id: guestId,
     }).eq('id', existing.id);
-    // Aggiorna anche nome ospite se c'è guest_id
-    if (existing.guest_id) {
-      await supabase.from('guests').update({ full_name: parsed.guest_name }).eq('id', existing.guest_id);
-    }
     return { action: 'updated', booking: { ...existing, ...parsed } };
   }
 
@@ -226,14 +244,15 @@ async function matchOrInsert(parsed: ParsedBooking): Promise<{ action: string; b
     .maybeSingle();
 
   if (byDate) {
+    const guestId = byDate.guest_id
+      ? (await supabase.from('guests').update({ full_name: parsed.guest_name }).eq('id', byDate.guest_id), byDate.guest_id)
+      : await findOrCreateGuest(parsed.guest_name);
     await supabase.from('bookings').update({
       ota_booking_ref: parsed.ota_booking_ref,
       gross_amount: parsed.gross_amount,
       channel: parsed.channel,
+      guest_id: guestId,
     }).eq('id', byDate.id);
-    if (byDate.guest_id) {
-      await supabase.from('guests').update({ full_name: parsed.guest_name }).eq('id', byDate.guest_id);
-    }
     return { action: 'updated', booking: { ...byDate, ...parsed } };
   }
 
