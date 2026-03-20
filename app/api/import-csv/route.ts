@@ -60,11 +60,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { csv } = await req.json() as { csv: string };
-  if (!csv?.trim()) return NextResponse.json({ error: "CSV vuoto" }, { status: 400 });
+  let body: { csv?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Body JSON non valido" }, { status: 400 });
+  }
+
+  const csv = body?.csv ?? "";
+  if (!csv.trim()) return NextResponse.json({ error: "CSV vuoto o mancante" }, { status: 400 });
 
   const lines = csv.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) return NextResponse.json({ error: "CSV insufficiente" }, { status: 400 });
+  if (lines.length < 2) return NextResponse.json({ error: `CSV con ${lines.length} righe — serve almeno header + 1 riga dati` }, { status: 400 });
 
   const sep     = detectSep(lines[0]);
   const headers = parseCsvLine(lines[0], sep).map(h => h.replace(/['"]/g, "").trim());
@@ -77,7 +84,9 @@ export async function POST(req: NextRequest) {
   const iAmount  = col(headers, "totale host", "payout", "importo pagato", "importo", "amount");
 
   if (iCI === -1 || iCO === -1) {
-    return NextResponse.json({ error: `Colonne date non trovate. Headers: ${headers.join(" | ")}` }, { status: 400 });
+    return NextResponse.json({
+      error: `Colonne date non trovate.\nHeaders rilevati: ${headers.join(" | ")}\nSeparatore: "${sep}"`,
+    }, { status: 400 });
   }
 
   let updated = 0, skipped = 0;

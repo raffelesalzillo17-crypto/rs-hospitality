@@ -280,16 +280,26 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setCsvImporting(true); setCsvResult(null);
-    const csv = await file.text();
-    const res = await fetch("/api/import-csv", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-RS-Secret": "rshospitality2026" },
-      body: JSON.stringify({ csv }),
-    });
-    setCsvResult(await res.json());
-    setCsvImporting(false);
-    e.target.value = "";
-    await fetchBookings();
+    try {
+      const csv = await file.text();
+      const res = await fetch("/api/import-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-RS-Secret": "rshospitality2026" },
+        body: JSON.stringify({ csv }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCsvResult({ updated: 0, skipped: 0, errors: [data?.error ?? `Errore ${res.status}`] });
+      } else {
+        setCsvResult(data);
+        await fetchBookings();
+      }
+    } catch (err) {
+      setCsvResult({ updated: 0, skipped: 0, errors: [(err as Error).message ?? "Errore sconosciuto"] });
+    } finally {
+      setCsvImporting(false);
+      e.target.value = "";
+    }
   }
 
   // ── Copy link ──────────────────────────────────────────────────────────────

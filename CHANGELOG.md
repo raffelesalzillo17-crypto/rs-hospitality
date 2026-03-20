@@ -4,6 +4,21 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 23 — Fix crash import CSV)
+
+### `/api/import-csv/route.ts`
+- JSON body parsato in try/catch con messaggio leggibile invece di crash
+- Errore 400 restituisce sempre `{ error: "..." }` con dettagli: righe rilevate, headers, separatore
+
+### `app/admin/page.tsx` — `handleCsvImport`
+- Wrappato in try/catch: nessun crash della pagina in caso di errore
+- Se `res.ok === false` → legge `data.error` e lo mostra nel box risultato
+- Eccezioni di rete → messaggio di errore nel box risultato
+- `fetchBookings` chiamato solo in caso di successo
+- `e.target.value = ""` spostato in `finally` per garantire reset sempre
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 22 — Source of truth calendario RS Central)
 
 ### Fix 2 — `app/api/sync-calendar/route.ts`
