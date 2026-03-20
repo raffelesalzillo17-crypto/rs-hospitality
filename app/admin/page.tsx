@@ -171,7 +171,7 @@ export default function AdminPage() {
   const [blockSaving, setBlockSaving] = useState(false);
 
   const [csvImporting, setCsvImporting] = useState(false);
-  const [csvResult,    setCsvResult]    = useState<{ updated: number; skipped: number; errors: string[] } | null>(null);
+  const [csvResult,    setCsvResult]    = useState<{ updated: number; created?: number; skipped: number; errors: string[] } | null>(null);
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchBookings = useCallback(async () => {
@@ -585,7 +585,8 @@ export default function AdminPage() {
               </label>
               {csvResult && (
                 <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: csvResult.errors.length ? "#fef3cd" : "#d0ead0", color: csvResult.errors.length ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
-                  <strong>{csvResult.updated} aggiornate</strong>, {csvResult.skipped} saltate.
+                  {(csvResult.created ?? 0) > 0 && <><strong>{csvResult.created} create</strong>, </>}
+                  <strong>{csvResult.updated} aggiornate</strong>{csvResult.skipped > 0 ? `, ${csvResult.skipped} saltate` : ""}.
                   {csvResult.errors.length > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
                 </div>
               )}

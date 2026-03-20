@@ -4,6 +4,19 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 25 — Import CSV: INSERT prenotazioni storiche)
+
+### `/api/import-csv/route.ts`
+- Prenotazione non trovata → INSERT invece di skip (era il caso delle 6 prenotazioni storiche feb 2026)
+- Rilevamento automatico canale dal nome header: `reservation number` → `booking`, `confirmation code` → `airbnb`
+- Property attiva caricata una sola volta fuori dal loop
+- Risposta include `created` (nuove) + `updated` (esistenti aggiornate)
+
+### `app/admin/page.tsx`
+- Box risultato CSV mostra separatamente `N create` e `N aggiornate`
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 24 — Import CSV Booking.com)
 
 ### `/api/import-csv/route.ts`
