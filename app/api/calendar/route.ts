@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-const ICAL_URLS = [
-  'https://www.airbnb.it/calendar/ical/1151100346729188269.ics?t=7df772bef1f3499f822c4b6270cbe231',
-  'https://ical.booking.com/v1/export/t/28033739-d90f-4362-8f72-3cb8be1d31bc.ics',
-];
+// Client server-side: usa service role se disponibile, altrimenti anon
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 function parseDate(str: string): string {
   const s = str.replace(/T[\s\S]*/, '').trim();
@@ -31,12 +33,41 @@ function parseiCal(raw: string): { start: string; end: string }[] {
   return events;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Legge gli URL iCal da tutte le properties attive
+    const { searchParams } = new URL(request.url);
+    const slug = searchParams.get('property'); // filtro opzionale per property
+
+    let query = supabase
+      .from('properties')
+      .select('id, name, ical_airbnb, ical_booking')
+      .eq('active', true);
+
+    if (slug) query = query.eq('name', slug);
+
+    const { data: properties, error } = await query;
+
+    if (error) throw new Error(error.message);
+
+    // Raccoglie tutti gli URL non nulli
+    const icalUrls: string[] = (properties ?? []).flatMap(p => [
+      p.ical_airbnb,
+      p.ical_booking,
+    ].filter(Boolean));
+
+    if (icalUrls.length === 0) {
+      return NextResponse.json({ events: [] }, {
+        headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate=86400' },
+      });
+    }
+
     const results = await Promise.allSettled(
-      ICAL_URLS.map(url => fetch(url, { next: { revalidate: 3600 } }).then(r => r.text()))
+      icalUrls.map(url => fetch(url, { next: { revalidate: 3600 } }).then(r => r.text()))
     );
+
     const events = results.flatMap(r => r.status === 'fulfilled' ? parseiCal(r.value) : []);
+
     return NextResponse.json({ events }, {
       headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate=86400' },
     });

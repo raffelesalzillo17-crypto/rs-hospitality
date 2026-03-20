@@ -4,6 +4,33 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-20 (aggiornamento 11 — properties su Supabase + calendar dinamico)
+
+### Database
+- **Record "Il Tulipano"** inserito in `properties` (id: `0e16fce0-...`): Via Clanio 60, Marcianise, RS Comfort, 55–80€/notte, URL Airbnb e Booking reali, entrambi i feed iCal
+
+### API (`app/api/calendar/route.ts`)
+- **Rimossi URL iCal hardcoded**: gli URL vengono ora letti da `properties.ical_airbnb` e `properties.ical_booking` per tutte le properties attive
+- **Parametro opzionale `?property=nome`**: permette di filtrare gli eventi per una property specifica
+- **Client Supabase server-side**: usa `SUPABASE_SERVICE_ROLE_KEY` se presente, altrimenti fallback su anon key
+- Nessuna modifica al formato risposta `{ events: [{start, end}] }` — retrocompatibile
+
+---
+
+## [Unreleased] — 2026-03-20 (aggiornamento 10 — schema Supabase completo)
+
+### Database — Schema RS Hospitality
+- **Tabella `properties`**: alloggi gestiti (name, category, city, price_min/max, ical_airbnb, ical_booking, active)
+- **Tabella `guests`**: anagrafica ospiti (full_name, phone, email, document_type/number, nationality)
+- **Tabella `bookings`**: prenotazioni in inglese (FK → properties, guests; total_price, notes, channel, status, uid_ical)
+- **Tabella `messages`**: log comunicazioni (booking_id FK, channel, direction inbound/outbound, content, sent_at)
+- **Tabella `payments`**: pagamenti (booking_id FK, amount, method, status, paid_at)
+- **Record test**: "Il Tulipano" inserito in `properties` (RS Comfort, Marcianise, price 60–90€/notte)
+- File migrazione: `supabase/migrations/20260320_schema_rs_hospitality.sql`
+- Script esecuzione: `scripts/run-migration.mjs` (uso: `DB_PASSWORD=xxx node scripts/run-migration.mjs`)
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 9 — sync iCal → Supabase)
 
 ### API (`app/api/sync-calendar/route.ts`)
