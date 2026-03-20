@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
-import * as pdfParseModule from 'pdf-parse';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfParseModule as any).default ?? pdfParseModule;
+// pdf-parse caricato dinamicamente per evitare crash serverless (legge fs al bootstrap)
+async function parsePdf(buffer: Buffer): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mod = await import('pdf-parse') as any;
+  const fn = mod.default ?? mod;
+  const result = await fn(buffer);
+  return result.text as string;
+}
 
 // ── Supabase (service role) ───────────────────────────────────────────────────
 const supabase = createClient(
@@ -142,8 +147,7 @@ async function parseBooking(
     if (!b64) continue;
     try {
       const buffer = Buffer.from(b64, 'base64');
-      const parsed = await pdfParse(buffer);
-      pdfText = parsed.text;
+      pdfText = await parsePdf(buffer);
       break;
     } catch { /* prossimo allegato */ }
   }
