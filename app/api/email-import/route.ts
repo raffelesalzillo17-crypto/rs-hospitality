@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
+import { createServerClient } from '@/lib/supabase-server';
+import { parseItalianShortDate, parseItalianLongDate, parseAmount } from '@/lib/date-utils';
+import type { ParsedBooking, EmailPayload } from '@/lib/types';
+
 // pdf-parse caricato dinamicamente per evitare crash serverless (legge fs al bootstrap)
 async function parsePdf(buffer: Buffer): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,69 +13,7 @@ async function parsePdf(buffer: Buffer): Promise<string> {
   return result.text as string;
 }
 
-// ── Supabase (service role) ───────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-// ── Mappa mesi italiani ───────────────────────────────────────────────────────
-const MESI: Record<string, string> = {
-  gen: '01', feb: '02', mar: '03', apr: '04', mag: '05', giu: '06',
-  lug: '07', ago: '08', set: '09', ott: '10', nov: '11', dic: '12',
-  gennaio: '01', febbraio: '02', marzo: '03', aprile: '04', maggio: '05',
-  giugno: '06', luglio: '07', agosto: '08', settembre: '09', ottobre: '10',
-  novembre: '11', dicembre: '12',
-};
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface ParsedBooking {
-  guest_name: string;
-  check_in: string;
-  check_out: string;
-  gross_amount: number | null;
-  ota_booking_ref: string;
-  channel: string;
-}
-
-interface EmailPayload {
-  from: string;
-  subject: string;
-  bodyHtml: string;
-  bodyText: string;
-  attachments: { filename?: string; content?: string; data?: string }[];
-}
-
-// ── Date helpers ──────────────────────────────────────────────────────────────
-/**
- * "12 mag" → "2026-05-12" (usa anno corrente, +1 se già passato)
- */
-function parseItalianShortDate(day: string, month: string): string {
-  const mm = MESI[month.toLowerCase()];
-  if (!mm) throw new Error(`Mese sconosciuto: ${month}`);
-  const dd = day.padStart(2, '0');
-  const now = new Date();
-  let year = now.getFullYear();
-  const candidate = new Date(`${year}-${mm}-${dd}T00:00:00`);
-  if (candidate < now) year += 1;
-  return `${year}-${mm}-${dd}`;
-}
-
-/**
- * "12 maggio 2026" o "12 mag 2026" → "2026-05-12"
- */
-function parseItalianLongDate(str: string): string {
-  const m = str.trim().match(/^(\d{1,2})\s+([a-zà-ú]+)\s+(\d{4})$/i);
-  if (!m) throw new Error(`Data non parsabile: ${str}`);
-  const mm = MESI[m[2].toLowerCase()];
-  if (!mm) throw new Error(`Mese sconosciuto: ${m[2]}`);
-  return `${m[3]}-${mm}-${m[1].padStart(2, '0')}`;
-}
-
-function parseAmount(raw: string): number {
-  // "50,00" → 50.00  |  "1.050,00" → 1050.00
-  return parseFloat(raw.replace(/\./g, '').replace(',', '.'));
-}
+const supabase = createServerClient();
 
 // ── Parser Airbnb ─────────────────────────────────────────────────────────────
 function parseAirbnb(bodyHtml: string): ParsedBooking {
@@ -198,14 +139,12 @@ async function parseBooking(
 
 // ── Find or create guest ──────────────────────────────────────────────────────
 async function findOrCreateGuest(full_name: string): Promise<string | null> {
-  // Cerca per nome esatto
   const { data: found } = await supabase
     .from('guests')
     .select('id')
     .eq('full_name', full_name)
     .maybeSingle();
   if (found) return found.id;
-  // Crea nuovo
   const { data: created } = await supabase
     .from('guests')
     .insert({ full_name })
@@ -305,7 +244,6 @@ async function writeLog(entry: {
 
 // ── POST handler ──────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Auth
   const secret = req.headers.get('x-rs-secret');
   if (secret !== process.env.EMAIL_IMPORT_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -320,7 +258,6 @@ export async function POST(req: NextRequest) {
 
   const { from, subject, bodyHtml, bodyText, attachments = [] } = payload;
 
-  // Determina canale
   const isAirbnb  = from.toLowerCase().includes('airbnb.com');
   const isBooking = from.toLowerCase().includes('booking.com')
     || attachments.some(a => a.filename?.toLowerCase().endsWith('.pdf'));
@@ -355,7 +292,6 @@ export async function POST(req: NextRequest) {
 
   try {
     const { action, booking } = await matchOrInsert(parsed);
-
     await writeLog({
       channel: parsed.channel,
       from_email: from, subject,
@@ -364,7 +300,6 @@ export async function POST(req: NextRequest) {
       guest_name: parsed.guest_name,
       error_message: null,
     });
-
     return NextResponse.json({ success: true, action, booking });
   } catch (e) {
     const msg = (e as Error).message;

@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase-server';
 
-// Client server-side: usa service role se disponibile, altrimenti anon
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createServerClient();
 
 function parseDate(str: string): string {
   const s = str.replace(/T[\s\S]*/, '').trim();
@@ -13,7 +9,6 @@ function parseDate(str: string): string {
 }
 
 function parseiCal(raw: string): { start: string; end: string }[] {
-  // Unfold continuation lines
   const text = raw.replace(/\r\n[ \t]/g, '').replace(/\r\n|\r/g, '\n');
   const lines = text.split('\n');
   const events: { start: string; end: string }[] = [];
@@ -27,7 +22,7 @@ function parseiCal(raw: string): { start: string; end: string }[] {
       inEvent = false;
     } else if (inEvent) {
       if (line.startsWith('DTSTART')) start = parseDate(line.split(':').slice(1).join(':'));
-      else if (line.startsWith('DTEND'))  end   = parseDate(line.split(':').slice(1).join(':'));
+      else if (line.startsWith('DTEND')) end  = parseDate(line.split(':').slice(1).join(':'));
     }
   }
   return events;
@@ -35,9 +30,8 @@ function parseiCal(raw: string): { start: string; end: string }[] {
 
 export async function GET(request: Request) {
   try {
-    // Legge gli URL iCal da tutte le properties attive
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get('property'); // filtro opzionale per property
+    const slug = searchParams.get('property');
 
     let query = supabase
       .from('properties')
@@ -47,10 +41,8 @@ export async function GET(request: Request) {
     if (slug) query = query.eq('name', slug);
 
     const { data: properties, error } = await query;
-
     if (error) throw new Error(error.message);
 
-    // Raccoglie tutti gli URL non nulli
     const icalUrls: string[] = (properties ?? []).flatMap(p => [
       p.ical_airbnb,
       p.ical_booking,

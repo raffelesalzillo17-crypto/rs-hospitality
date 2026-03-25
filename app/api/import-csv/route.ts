@@ -1,20 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase-server';
+import { parseDate, parseAmount } from '@/lib/date-utils';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createServerClient();
 
 // ── CSV parser minimo (gestisce campi quotati con virgole interne) ─────────────
 function parseCsvLine(line: string, sep: string): string[] {
   const result: string[] = [];
-  let cur = "";
+  let cur = '';
   let inQ = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') { inQ = !inQ; continue; }
-    if (!inQ && line.slice(i, i + sep.length) === sep) { result.push(cur.trim()); cur = ""; i += sep.length - 1; continue; }
+    if (!inQ && line.slice(i, i + sep.length) === sep) { result.push(cur.trim()); cur = ''; i += sep.length - 1; continue; }
     cur += ch;
   }
   result.push(cur.trim());
@@ -22,10 +20,10 @@ function parseCsvLine(line: string, sep: string): string[] {
 }
 
 function detectSep(header: string): string {
-  return (header.match(/;/g) ?? []).length > (header.match(/,/g) ?? []).length ? ";" : ",";
+  return (header.match(/;/g) ?? []).length > (header.match(/,/g) ?? []).length ? ';' : ',';
 }
 
-// ── Trova indice colonna (case-insensitive, parziale) ────────────────────────
+// Trova indice colonna (case-insensitive, parziale)
 function col(headers: string[], ...candidates: string[]): number {
   for (const c of candidates) {
     const i = headers.findIndex(h => h.toLowerCase().includes(c.toLowerCase()));
@@ -34,86 +32,52 @@ function col(headers: string[], ...candidates: string[]): number {
   return -1;
 }
 
-// ── Converti data in ISO (supporta DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD) ───────
-const MONTHS_EN: Record<string, string> = {
-  jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",
-  jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12",
-};
-const MONTHS_IT: Record<string, string> = {
-  gen:"01",feb:"02",mar:"03",apr:"04",mag:"05",giu:"06",
-  lug:"07",ago:"08",set:"09",ott:"10",nov:"11",dic:"12",
-};
-
-function parseDate(raw: string): string | null {
-  if (!raw) return null;
-  raw = raw.trim().replace(/['"]/g, "");
-  // ISO YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  // DD/MM/YYYY
-  const mSlash = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (mSlash) return `${mSlash[3]}-${mSlash[2].padStart(2,"0")}-${mSlash[1].padStart(2,"0")}`;
-  // DD Mon YYYY  (es. "25 Mar 2026" — Booking.com EN)
-  const mWord = raw.match(/^(\d{1,2})\s+([a-zA-Z]{3,})\s+(\d{4})$/);
-  if (mWord) {
-    const mm = MONTHS_EN[mWord[2].slice(0,3).toLowerCase()] ?? MONTHS_IT[mWord[2].slice(0,3).toLowerCase()];
-    if (mm) return `${mWord[3]}-${mm}-${mWord[1].padStart(2,"0")}`;
-  }
-  return null;
-}
-
-function parseAmount(raw: string): number | null {
-  if (!raw) return null;
-  const cleaned = raw.replace(/[€$£\s'"]/g, "").replace(",", ".");
-  const n = parseFloat(cleaned);
-  return isNaN(n) ? null : n;
-}
-
 // ── POST handler ──────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-rs-secret");
+  const secret = req.headers.get('x-rs-secret');
   if (secret !== process.env.EMAIL_IMPORT_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   let body: { csv?: string };
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Body JSON non valido" }, { status: 400 });
+    return NextResponse.json({ error: 'Body JSON non valido' }, { status: 400 });
   }
 
-  const csv = body?.csv ?? "";
-  if (!csv.trim()) return NextResponse.json({ error: "CSV vuoto o mancante" }, { status: 400 });
+  const csv = body?.csv ?? '';
+  if (!csv.trim()) return NextResponse.json({ error: 'CSV vuoto o mancante' }, { status: 400 });
 
   const lines = csv.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return NextResponse.json({ error: `CSV con ${lines.length} righe — serve almeno header + 1 riga dati` }, { status: 400 });
 
   const sep     = detectSep(lines[0]);
-  const headers = parseCsvLine(lines[0], sep).map(h => h.replace(/['"]/g, "").trim());
+  const headers = parseCsvLine(lines[0], sep).map(h => h.replace(/['"]/g, '').trim());
 
   // Indici colonne — Airbnb (IT/EN) + Booking.com (EN) + Pulse/altri
-  const iRef     = col(headers, "numero di riferimento", "codice di conferma", "confirmation code", "codice", "reservation number", "booking number");
-  const iCI      = col(headers, "check-in", "checkin", "data di inizio", "start date", "arrivo", "arrival");
-  const iCO      = col(headers, "checkout", "check-out", "data di fine", "end date", "partenza", "departure");
-  const iName    = col(headers, "nome dell", "guest name", "booker name", "ospite", "nome");
-  const iAmount  = col(headers, "netto", "totale host", "payout", "importo pagato", "importo", "amount", "original amount", "final amount");
+  const iRef    = col(headers, 'numero di riferimento', 'codice di conferma', 'confirmation code', 'codice', 'reservation number', 'booking number');
+  const iCI     = col(headers, 'check-in', 'checkin', 'data di inizio', 'start date', 'arrivo', 'arrival');
+  const iCO     = col(headers, 'checkout', 'check-out', 'data di fine', 'end date', 'partenza', 'departure');
+  const iName   = col(headers, 'nome dell', 'guest name', 'booker name', 'ospite', 'nome');
+  const iAmount = col(headers, 'netto', 'totale host', 'payout', 'importo pagato', 'importo', 'amount', 'original amount', 'final amount');
 
   if (iCI === -1 || iCO === -1) {
     return NextResponse.json({
-      error: `Colonne date non trovate.\nHeaders rilevati: ${headers.join(" | ")}\nSeparatore: "${sep}"`,
+      error: `Colonne date non trovate.\nHeaders rilevati: ${headers.join(' | ')}\nSeparatore: "${sep}"`,
     }, { status: 400 });
   }
 
-  // Rileva canale: Booking.com usa "reservation number", Airbnb IT usa "numero di riferimento" o "tipologia"
-  const refHeader  = iRef !== -1 ? headers[iRef].toLowerCase() : "";
-  const allHeaders = headers.join(" ").toLowerCase();
-  const detectedChannel = refHeader.includes("reservation") ? "booking"
-    : refHeader.includes("confirmation") || refHeader.includes("codice") ? "airbnb"
-    : refHeader.includes("numero") || allHeaders.includes("tipologia") || allHeaders.includes("netto") ? "airbnb"
-    : "diretto";
+  // Rileva canale
+  const refHeader  = iRef !== -1 ? headers[iRef].toLowerCase() : '';
+  const allHeaders = headers.join(' ').toLowerCase();
+  const detectedChannel = refHeader.includes('reservation') ? 'booking'
+    : refHeader.includes('confirmation') || refHeader.includes('codice') ? 'airbnb'
+    : refHeader.includes('numero') || allHeaders.includes('tipologia') || allHeaders.includes('netto') ? 'airbnb'
+    : 'diretto';
 
   // Cerca property attiva una sola volta
-  const { data: prop } = await supabase.from("properties").select("id").eq("active", true).limit(1).maybeSingle();
+  const { data: prop } = await supabase.from('properties').select('id').eq('active', true).limit(1).maybeSingle();
 
   let updated = 0, created = 0, skipped = 0;
   const errors: string[] = [];
@@ -130,16 +94,15 @@ export async function POST(req: NextRequest) {
 
     if (!check_in || !check_out) { errors.push(`Riga ${i + 1}: date non valide (${row[iCI]} → ${row[iCO]})`); continue; }
 
-    // Cerca prenotazione esistente per ref poi per date
     let bookingId: string | null = null;
     let existingGuestId: string | null = null;
 
     if (ref) {
-      const { data } = await supabase.from("bookings").select("id, guest_id").eq("ota_booking_ref", ref).maybeSingle();
+      const { data } = await supabase.from('bookings').select('id, guest_id').eq('ota_booking_ref', ref).maybeSingle();
       if (data) { bookingId = data.id; existingGuestId = data.guest_id; }
     }
     if (!bookingId) {
-      const { data } = await supabase.from("bookings").select("id, guest_id").eq("check_in", check_in).eq("check_out", check_out).maybeSingle();
+      const { data } = await supabase.from('bookings').select('id, guest_id').eq('check_in', check_in).eq('check_out', check_out).maybeSingle();
       if (data) { bookingId = data.id; existingGuestId = data.guest_id; }
     }
 
@@ -149,14 +112,14 @@ export async function POST(req: NextRequest) {
       if (ref)      updateData.ota_booking_ref = ref;
       if (gross_amt) updateData.gross_amount   = gross_amt;
       if (Object.keys(updateData).length > 0) {
-        await supabase.from("bookings").update(updateData).eq("id", bookingId);
+        await supabase.from('bookings').update(updateData).eq('id', bookingId);
       }
       if (guest_name) {
         if (existingGuestId) {
-          await supabase.from("guests").update({ full_name: guest_name }).eq("id", existingGuestId);
+          await supabase.from('guests').update({ full_name: guest_name }).eq('id', existingGuestId);
         } else {
-          const { data: ng } = await supabase.from("guests").insert({ full_name: guest_name }).select("id").single();
-          if (ng) await supabase.from("bookings").update({ guest_id: ng.id }).eq("id", bookingId);
+          const { data: ng } = await supabase.from('guests').insert({ full_name: guest_name }).select('id').single();
+          if (ng) await supabase.from('bookings').update({ guest_id: ng.id }).eq('id', bookingId);
         }
       }
       updated++;
@@ -164,25 +127,25 @@ export async function POST(req: NextRequest) {
       // INSERT prenotazione storica
       let guestId: string | null = null;
       if (guest_name) {
-        const { data: existingGuest } = await supabase.from("guests").select("id").eq("full_name", guest_name).maybeSingle();
+        const { data: existingGuest } = await supabase.from('guests').select('id').eq('full_name', guest_name).maybeSingle();
         if (existingGuest) {
           guestId = existingGuest.id;
         } else {
-          const { data: ng } = await supabase.from("guests").insert({ full_name: guest_name }).select("id").single();
+          const { data: ng } = await supabase.from('guests').insert({ full_name: guest_name }).select('id').single();
           guestId = ng?.id ?? null;
         }
       }
-      const { error: insErr } = await supabase.from("bookings").insert({
-        property_id:    prop?.id ?? null,
-        guest_id:       guestId,
+      const { error: insErr } = await supabase.from('bookings').insert({
+        property_id:     prop?.id ?? null,
+        guest_id:        guestId,
         check_in,
         check_out,
-        channel:        detectedChannel,
+        channel:         detectedChannel,
         ota_booking_ref: ref,
-        gross_amount:   gross_amt,
-        status:         "confirmed",
-        num_guests:     1,
-        booking_type:   "booking",
+        gross_amount:    gross_amt,
+        status:          'confirmed',
+        num_guests:      1,
+        booking_type:    'booking',
       });
       if (insErr) errors.push(`Riga ${i + 1}: insert fallito — ${insErr.message}`);
       else created++;
