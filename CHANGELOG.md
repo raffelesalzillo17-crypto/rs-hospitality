@@ -4,6 +4,23 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-25 (aggiornamento 30 — Canale No Tax + cedolare per canale)
+
+### `lib/constants.ts`
+- `CHANNELS`: `'WhatsApp'` → `'No Tax'`
+- `CHANNEL_LABEL`: `whatsapp: 'WhatsApp'` → `no_tax: 'No Tax'`
+- `OTA_COMMISSION`: `whatsapp` → `no_tax` (commissione 0%)
+- `CEDOLARE_BY_CHANNEL` (nuovo): cedolare 21% per Airbnb/Booking/Diretto, **0% per No Tax**
+- `CEDOLARE_RATE` mantenuto come fallback di default
+
+### `app/admin/page.tsx`
+- `calcFin()`: usa `CEDOLARE_BY_CHANNEL[channel]` al posto del rate fisso — No Tax paga 0% di cedolare; restituisce anche `cedRate` per il display
+- Bottom sheet: la riga cedolare mostra la percentuale reale ("Cedolare 0%" per No Tax, "Cedolare 21%" per gli altri)
+- Form aggiunta prenotazione: select canale ora mostra `Airbnb / Booking / Diretto / No Tax`
+- Tab Report: rimosso pulsante "Esporta CSV" e relativa funzione `exportCsv`
+
+---
+
 ## [Unreleased] — 2026-03-25 (aggiornamento 29 — Logica finanziaria dashboard)
 
 ### `lib/constants.ts`

@@ -6,7 +6,7 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import {
   CHANNELS, STATUSES, STATUS_STYLE, STATUS_LABEL,
   CHANNEL_LABEL, MONTH_IT, ICAL_NOISE_LABELS, PALETTE,
-  OTA_COMMISSION, CEDOLARE_RATE, COSTI_PULIZIE,
+  OTA_COMMISSION, CEDOLARE_BY_CHANNEL, CEDOLARE_RATE, COSTI_PULIZIE,
 } from "@/lib/constants";
 import type { Booking, Guest, Property, ImportLog } from "@/lib/types";
 
@@ -60,13 +60,15 @@ function barLabel(b: Booking): string {
 function calcFin(b: Booking) {
   const g = b.gross_amount;
   if (!g) return null;
-  const rate            = OTA_COMMISSION[b.channel.toLowerCase()] ?? 0;
+  const ch              = b.channel.toLowerCase();
+  const rate            = OTA_COMMISSION[ch] ?? 0;
+  const cedRate         = CEDOLARE_BY_CHANNEL[ch] ?? CEDOLARE_RATE;
   const commissione_ota = g * rate;
   const netto_dopo_comm = g - commissione_ota;
-  const cedolare        = netto_dopo_comm * CEDOLARE_RATE;
+  const cedolare        = netto_dopo_comm * cedRate;
   const netto_ricevuto  = netto_dopo_comm - cedolare;
   const utile_reale     = netto_ricevuto - COSTI_PULIZIE;
-  return { commissione_ota, netto_dopo_comm, cedolare, netto_ricevuto, costi_pulizie: COSTI_PULIZIE, utile_reale };
+  return { commissione_ota, netto_dopo_comm, cedolare, cedRate, netto_ricevuto, costi_pulizie: COSTI_PULIZIE, utile_reale };
 }
 function eur(n: number | null | undefined) {
   if (n == null) return "—";
@@ -658,35 +660,7 @@ export default function AdminPage() {
             return [t.lordo, t.commissioni, t.netto_ota, t.cedolare, t.netto_ricevuto, t.pulizie, t.utile];
           }
 
-          function exportCsv() {
-            const headers = ["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Comm. OTA","Netto OTA","Cedolare","Netto Ricevuto","Pulizie","Utile Reale"];
-            const rows = monthBookings.map(b => {
-              const g    = getGuest(b);
-              const f    = calcFin(b);
-              const nn   = Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / 86_400_000);
-              return [
-                g?.full_name ?? "",
-                getPropName(b) ?? "",
-                b.check_in, b.check_out, nn,
-                fmtCh(b.channel),
-                b.gross_amount ?? "",
-                f ? f.commissione_ota.toFixed(2) : "",
-                f ? f.netto_dopo_comm.toFixed(2) : "",
-                f ? f.cedolare.toFixed(2) : "",
-                f ? f.netto_ricevuto.toFixed(2) : "",
-                f ? f.costi_pulizie.toFixed(2) : "",
-                f ? f.utile_reale.toFixed(2) : "",
-              ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
-            });
-            const csv = "\uFEFF" + [headers.map(h => `"${h}"`).join(","), ...rows].join("\r\n");
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement("a");
-            a.href     = url;
-            a.download = `rs_report_${year}_${String(month + 1).padStart(2, "0")}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-          }
+
 
           const thStyle: React.CSSProperties = { padding: "9px 12px", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" };
           const tdNum: React.CSSProperties   = { padding: "9px 12px", textAlign: "right", fontSize: 13 };
@@ -704,9 +678,6 @@ export default function AdminPage() {
                   <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 })}
                     style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
                 </div>
-                <button onClick={exportCsv} style={{ padding: "8px 18px", border: `1px solid ${c.cammello}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>
-                  ↓ Esporta CSV
-                </button>
                 <span style={{ fontSize: 12, color: c.cammello }}>{monthBookings.length} prenotazioni · {totali.count} con importo lordo</span>
               </div>
 
@@ -979,7 +950,7 @@ export default function AdminPage() {
                         ["Lordo OTA",       eur(b.gross_amount),       false],
                         [`Comm. ${fmtCh(b.channel)} (${((OTA_COMMISSION[b.channel.toLowerCase()] ?? 0) * 100).toFixed(2)}%)`, `− ${eur(fin.commissione_ota)}`, true],
                         ["Netto OTA",       eur(fin.netto_dopo_comm),  false],
-                        ["Cedolare 21%",    `− ${eur(fin.cedolare)}`,  true],
+                        [`Cedolare ${(fin.cedRate * 100).toFixed(0)}%`, `− ${eur(fin.cedolare)}`,  true],
                         ["Netto ricevuto",  eur(fin.netto_ricevuto),   false],
                         ["Pulizie",         `− ${eur(fin.costi_pulizie)}`, true],
                       ] as [string, string, boolean][]).map(([label, value, isDeduction]) => (

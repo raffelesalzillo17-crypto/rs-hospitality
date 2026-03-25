@@ -32,18 +32,27 @@ export const ICAL_NOISE_LABELS = new Set([
 
 // Commissioni OTA sul lordo (percentuale decimale)
 export const OTA_COMMISSION: Record<string, number> = {
-  airbnb:   0.1891,
-  booking:  0.2015,
-  diretto:  0,
-  direct:   0,
-  whatsapp: 0,
+  airbnb:  0.1891,
+  booking: 0.2015,
+  diretto: 0,
+  direct:  0,
+  no_tax:  0,
 };
 
-export const CEDOLARE_RATE = 0.21;   // cedolare secca 21%
+// Cedolare secca per canale (no_tax = 0%)
+export const CEDOLARE_BY_CHANNEL: Record<string, number> = {
+  airbnb:  0.21,
+  booking: 0.21,
+  diretto: 0.21,
+  direct:  0.21,
+  no_tax:  0,
+};
+
+export const CEDOLARE_RATE = 0.21;   // default fallback
 export const COSTI_PULIZIE = 20;     // €20 fisso per prenotazione
 
 // Canali prenotazione
-export const CHANNELS = ['Airbnb', 'Booking', 'Diretto', 'WhatsApp'] as const;
+export const CHANNELS = ['Airbnb', 'Booking', 'Diretto', 'No Tax'] as const;
 export type Channel = (typeof CHANNELS)[number];
 
 // Stati prenotazione
@@ -65,7 +74,7 @@ export const STATUS_LABEL: Record<string, string> = {
 // Etichette canale (display)
 export const CHANNEL_LABEL: Record<string, string> = {
   airbnb: 'Airbnb', booking: 'Booking',
-  diretto: 'Diretto', direct: 'Diretto', whatsapp: 'WhatsApp',
+  diretto: 'Diretto', direct: 'Diretto', no_tax: 'No Tax',
 };
 
 // Mesi italiani per il calendario
