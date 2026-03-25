@@ -4,6 +4,43 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-25 (aggiornamento 28 — Autenticazione Supabase Auth su /admin)
+
+### Nuovi file
+- `middleware.ts` — Next.js middleware che protegge tutte le route `/admin/*`; chi non è autenticato viene rediretto a `/admin/login`; chi è già autenticato viene rediretto da `/admin/login` verso `/admin`
+- `lib/supabase-browser.ts` — factory `createSupabaseBrowser()` con `createBrowserClient` da `@supabase/ssr`; gestisce la sessione via cookie in modo coerente con il middleware
+- `app/admin/login/page.tsx` — pagina login con form email + password; stile RS (palette tabacco/lino, font Helvetica Neue)
+
+### File aggiornati
+- `app/admin/page.tsx` — usa `createSupabaseBrowser()` al posto di `createClient` diretto; aggiunge `useRouter`; aggiunge pulsante "Esci" nell'header (chiama `supabase.auth.signOut()` + redirect a `/admin/login`)
+
+### Dipendenze
+- Aggiunto `@supabase/ssr` per la gestione sessione cookie-based (SSR pattern)
+
+### Note operative
+- Creare l'utente `raffaele.salzillo02@gmail.com` in Supabase Auth Dashboard (Authentication → Users → Invite/Add user)
+- Nessuna variabile d'ambiente aggiuntiva richiesta (usa `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` già presenti)
+
+---
+
+## [Unreleased] — 2026-03-25 (aggiornamento 27 — Riorganizzazione lib/ + documento tecnico)
+
+### Nuovi file
+- `lib/supabase-server.ts` — factory `createServerClient()` per API routes (service role key)
+- `lib/types.ts` — tipi TypeScript condivisi: `Booking`, `Guest`, `Property`, `ImportLog`, `ParsedBooking`, `EmailPayload`, `VEvent`
+- `lib/date-utils.ts` — utility condivise: `MESI`, `MONTHS_EN`, `parseItalianShortDate`, `parseItalianLongDate`, `parseDate`, `parseAmount` (unificato)
+- `lib/constants.ts` — costanti condivise: `TULIPANO_ID`, `ICAL_FEEDS`, `CHANNELS`, `STATUSES`, `STATUS_STYLE`, `STATUS_LABEL`, `CHANNEL_LABEL`, `MONTH_IT`, `PALETTE`, `ICAL_NOISE_PATTERNS`, `ICAL_NOISE_LABELS`
+- `TECHNICAL.md` — documento tecnico riassuntivo completo
+
+### File aggiornati
+- `app/api/email-import/route.ts` — importa da `lib/supabase-server`, `lib/date-utils`, `lib/types`
+- `app/api/import-csv/route.ts` — importa da `lib/supabase-server`, `lib/date-utils`
+- `app/api/sync-calendar/route.ts` — importa da `lib/supabase-server`, `lib/constants`, `lib/types`
+- `app/api/calendar/route.ts` — importa da `lib/supabase-server`
+- `app/admin/page.tsx` — importa costanti e tipi da `lib/`; rimossa duplicazione di ~60 righe
+
+---
+
 ## [Unreleased] — 2026-03-20 (aggiornamento 26 — Import CSV Airbnb IT)
 
 ### `/api/import-csv/route.ts`

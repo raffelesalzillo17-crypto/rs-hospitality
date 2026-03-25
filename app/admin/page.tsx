@@ -1,80 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
+import {
+  CHANNELS, STATUSES, STATUS_STYLE, STATUS_LABEL,
+  CHANNEL_LABEL, MONTH_IT, ICAL_NOISE_LABELS, PALETTE,
+} from "@/lib/constants";
+import type { Booking, Guest, Property, ImportLog } from "@/lib/types";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createSupabaseBrowser();
 
-// ── Palette ───────────────────────────────────────────────────────────────────
-const c = {
-  tabacco: "#2C2416",
-  lino:    "#F0EBE0",
-  cammello:"#8B7355",
-  sabbia:  "#D4C9B5",
-} as const;
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-type Property = { id: string; name: string };
-
-type ImportLog = {
-  id: string;
-  created_at: string;
-  channel: string | null;
-  from_email: string | null;
-  subject: string | null;
-  action: string | null;
-  booking_ref: string | null;
-  guest_name: string | null;
-  error_message: string | null;
-};
-
-type Guest = { full_name: string; phone: string | null; email: string | null };
-
-type Booking = {
-  id: string;
-  property_id: string | null;
-  check_in: string;
-  check_out: string;
-  num_guests: number;
-  channel: string;
-  notes: string | null;
-  status: string;
-  total_price: number | null;
-  gross_amount: number | null;
-  uid_ical: string | null;
-  guest_id: string | null;
-  booking_type: string | null;
-  ota_booking_ref: string | null;
-  guests: Guest | Guest[] | null;
-  properties: { id: string; name: string } | { id: string; name: string }[] | null;
-};
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-const CHANNELS = ["Airbnb", "Booking", "Diretto", "WhatsApp"] as const;
-const STATUSES = ["pending", "confirmed", "cancelled"] as const;
-
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  confirmed: { bg: "#d0ead0", color: "#1a4d1a" },
-  pending:   { bg: "#fef3cd", color: "#6b4c00" },
-  cancelled: { bg: "#fad7d7", color: "#7a1a1a" },
-};
-const STATUS_LABEL: Record<string, string> = {
-  confirmed: "confermata",
-  pending:   "in attesa",
-  cancelled: "cancellata",
-};
-const CHANNEL_LABEL: Record<string, string> = {
-  airbnb: "Airbnb", booking: "Booking",
-  diretto: "Diretto", direct: "Diretto", whatsapp: "WhatsApp",
-};
-
-const MONTH_IT = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
-  "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
-
-const ICAL_NOISE = new Set(["reserved","airbnb (not available)","closed - not available","not available"]);
+const c = PALETTE;
 
 const emptyForm = {
   nome_ospite: "", telefono: "",
@@ -96,7 +33,7 @@ function notti(a: string, b: string) {
 }
 function fmtNote(note: string | null) {
   if (!note) return "";
-  return ICAL_NOISE.has(note.toLowerCase().trim()) ? "" : note;
+  return ICAL_NOISE_LABELS.has(note.toLowerCase().trim()) ? "" : note;
 }
 function fmtCh(ch: string) { return CHANNEL_LABEL[ch.toLowerCase()] ?? ch; }
 function getGuest(b: Booking): Guest | null {
@@ -140,6 +77,8 @@ function buildBookingMap(bookings: Booking[]) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function AdminPage() {
+  const router = useRouter();
+
   const [bookings,   setBookings]   = useState<Booking[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -361,6 +300,15 @@ export default function AdminPage() {
           </button>
           <button onClick={fetchBookings} style={{ padding: "8px 16px", border: `1px solid ${c.cammello}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             ↻ Aggiorna
+          </button>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push("/admin/login");
+            }}
+            style={{ padding: "8px 16px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}
+          >
+            Esci
           </button>
         </div>
       </header>
