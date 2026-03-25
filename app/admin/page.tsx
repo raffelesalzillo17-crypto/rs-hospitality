@@ -6,6 +6,7 @@ import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import {
   CHANNELS, STATUSES, STATUS_STYLE, STATUS_LABEL,
   CHANNEL_LABEL, MONTH_IT, ICAL_NOISE_LABELS, PALETTE,
+  OTA_COMMISSION, CEDOLARE_RATE, COSTI_PULIZIE,
 } from "@/lib/constants";
 import type { Booking, Guest, Property, ImportLog } from "@/lib/types";
 
@@ -55,6 +56,23 @@ function barLabel(b: Booking): string {
   if (b.booking_type === "block") return "Blocco";
   return getGuest(b)?.full_name ?? fmtCh(b.channel);
 }
+// ── Logica finanziaria ────────────────────────────────────────────────────────
+function calcFin(b: Booking) {
+  const g = b.gross_amount;
+  if (!g) return null;
+  const rate            = OTA_COMMISSION[b.channel.toLowerCase()] ?? 0;
+  const commissione_ota = g * rate;
+  const netto_dopo_comm = g - commissione_ota;
+  const cedolare        = netto_dopo_comm * CEDOLARE_RATE;
+  const netto_ricevuto  = netto_dopo_comm - cedolare;
+  const utile_reale     = netto_ricevuto - COSTI_PULIZIE;
+  return { commissione_ota, netto_dopo_comm, cedolare, netto_ricevuto, costi_pulizie: COSTI_PULIZIE, utile_reale };
+}
+function eur(n: number | null | undefined) {
+  if (n == null) return "—";
+  return `€\u202F${n.toFixed(2)}`;
+}
+
 function buildBookingMap(bookings: Booking[]) {
   const map = new Map<string, Map<string, { b: Booking; isStart: boolean; isEnd: boolean }>>();
   for (const bk of bookings) {
@@ -84,7 +102,7 @@ export default function AdminPage() {
   const [loading,    setLoading]    = useState(true);
   const [dbError,    setDbError]    = useState<string | null>(null);
 
-  const [activeTab,    setActiveTab]    = useState<"calendario" | "prenotazioni" | "import">("calendario");
+  const [activeTab,    setActiveTab]    = useState<"calendario" | "prenotazioni" | "import" | "report">("calendario");
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d;
   });
@@ -111,6 +129,10 @@ export default function AdminPage() {
 
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult,    setCsvResult]    = useState<{ updated: number; created?: number; skipped: number; errors: string[] } | null>(null);
+
+  const [reportMonth, setReportMonth] = useState(() => {
+    const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() };
+  });
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchBookings = useCallback(async () => {
@@ -323,9 +345,9 @@ export default function AdminPage() {
 
       {/* ── TABS ── */}
       <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${c.sabbia}`, padding: "0 24px", background: c.lino }}>
-        {(["calendario", "prenotazioni", "import"] as const).map(tab => (
+        {(["calendario", "prenotazioni", "report", "import"] as const).map(tab => (
           <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "import") fetchImportLogs(); }} style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "capitalize", letterSpacing: "0.04em" }}>
-            {tab === "import" ? "Import Log" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "import" ? "Import Log" : tab === "report" ? "Report" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -448,7 +470,7 @@ export default function AdminPage() {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
-                      {["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Stato","Pagamento","Check-in"].map(h => (
+                      {["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Comm. OTA","Netto OTA","Cedolare","Netto Ric.","Pulizie","Utile","Stato","Pagamento","Check-in"].map(h => (
                         <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -458,6 +480,7 @@ export default function AdminPage() {
                       const guest = getGuest(b);
                       const isPast = b.check_out < today;
                       const rowBg = i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)";
+                      const fin = calcFin(b);
                       return (
                         <tr key={b.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: rowBg, opacity: isPast ? 0.5 : 1, cursor: "pointer" }} onClick={() => setSelectedBooking(b)}>
                           <td style={{ padding: "11px 12px" }}>
@@ -475,6 +498,12 @@ export default function AdminPage() {
                           <td style={{ padding: "11px 12px", color: b.gross_amount ? c.tabacco : c.sabbia }}>
                             {b.gross_amount ? `€ ${b.gross_amount}` : "—"}
                           </td>
+                          <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.commissione_ota) : "—"}</td>
+                          <td style={{ padding: "11px 12px", color: fin ? c.tabacco : c.sabbia }}>{fin ? eur(fin.netto_dopo_comm) : "—"}</td>
+                          <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.cedolare) : "—"}</td>
+                          <td style={{ padding: "11px 12px", color: fin ? c.tabacco : c.sabbia }}>{fin ? eur(fin.netto_ricevuto) : "—"}</td>
+                          <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.costi_pulizie) : "—"}</td>
+                          <td style={{ padding: "11px 12px", fontWeight: 600, color: fin ? (fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{fin ? eur(fin.utile_reale) : "—"}</td>
                           <td style={{ padding: "11px 12px" }}>
                             <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: STATUS_STYLE[b.status]?.bg ?? c.sabbia, color: STATUS_STYLE[b.status]?.color ?? c.tabacco }}>
                               {STATUS_LABEL[b.status] ?? b.status}
@@ -581,6 +610,193 @@ export default function AdminPage() {
             }
           </div>
         )}
+
+        {/* ════════════════════════════════════════════════════════════
+            TAB: REPORT
+        ════════════════════════════════════════════════════════════ */}
+        {activeTab === "report" && (() => {
+          const { year, month } = reportMonth;
+
+          // Prenotazioni reali del mese selezionato (per check_in)
+          const monthBookings = bookings.filter(b =>
+            b.booking_type !== "block" &&
+            b.check_in.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)
+          );
+
+          // Raggruppa per property
+          const byProp = new Map<string, { name: string; rows: Booking[] }>();
+          for (const b of monthBookings) {
+            const pid  = b.property_id ?? "__none__";
+            const name = getPropName(b) ?? "Senza alloggio";
+            if (!byProp.has(pid)) byProp.set(pid, { name, rows: [] });
+            byProp.get(pid)!.rows.push(b);
+          }
+
+          type FinTotals = { lordo: number; commissioni: number; netto_ota: number; cedolare: number; netto_ricevuto: number; pulizie: number; utile: number; count: number };
+          function sumFin(rows: Booking[]): FinTotals {
+            let t: FinTotals = { lordo: 0, commissioni: 0, netto_ota: 0, cedolare: 0, netto_ricevuto: 0, pulizie: 0, utile: 0, count: 0 };
+            for (const b of rows) {
+              const f = calcFin(b);
+              if (!f) continue;
+              t.count++;
+              t.lordo         += b.gross_amount ?? 0;
+              t.commissioni   += f.commissione_ota;
+              t.netto_ota     += f.netto_dopo_comm;
+              t.cedolare      += f.cedolare;
+              t.netto_ricevuto+= f.netto_ricevuto;
+              t.pulizie       += f.costi_pulizie;
+              t.utile         += f.utile_reale;
+            }
+            return t;
+          }
+
+          const propEntries = [...byProp.entries()];
+          const totali = sumFin(monthBookings);
+
+          const COL_LABELS = ["Lordo", "Comm. OTA", "Netto OTA", "Cedolare", "Netto Ric.", "Pulizie", "Utile"];
+          function totRow(t: FinTotals) {
+            return [t.lordo, t.commissioni, t.netto_ota, t.cedolare, t.netto_ricevuto, t.pulizie, t.utile];
+          }
+
+          function exportCsv() {
+            const headers = ["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Comm. OTA","Netto OTA","Cedolare","Netto Ricevuto","Pulizie","Utile Reale"];
+            const rows = monthBookings.map(b => {
+              const g    = getGuest(b);
+              const f    = calcFin(b);
+              const nn   = Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / 86_400_000);
+              return [
+                g?.full_name ?? "",
+                getPropName(b) ?? "",
+                b.check_in, b.check_out, nn,
+                fmtCh(b.channel),
+                b.gross_amount ?? "",
+                f ? f.commissione_ota.toFixed(2) : "",
+                f ? f.netto_dopo_comm.toFixed(2) : "",
+                f ? f.cedolare.toFixed(2) : "",
+                f ? f.netto_ricevuto.toFixed(2) : "",
+                f ? f.costi_pulizie.toFixed(2) : "",
+                f ? f.utile_reale.toFixed(2) : "",
+              ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+            });
+            const csv = "\uFEFF" + [headers.map(h => `"${h}"`).join(","), ...rows].join("\r\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement("a");
+            a.href     = url;
+            a.download = `rs_report_${year}_${String(month + 1).padStart(2, "0")}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+
+          const thStyle: React.CSSProperties = { padding: "9px 12px", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" };
+          const tdNum: React.CSSProperties   = { padding: "9px 12px", textAlign: "right", fontSize: 13 };
+
+          return (
+            <div>
+              {/* Selettore mese */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 0 ? { year: y - 1, month: 11 } : { year: y, month: m - 1 })}
+                    style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
+                  <span style={{ fontSize: 15, fontWeight: 600, minWidth: 160, textAlign: "center" }}>
+                    {MONTH_IT[month]} {year}
+                  </span>
+                  <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 })}
+                    style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
+                </div>
+                <button onClick={exportCsv} style={{ padding: "8px 18px", border: `1px solid ${c.cammello}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>
+                  ↓ Esporta CSV
+                </button>
+                <span style={{ fontSize: 12, color: c.cammello }}>{monthBookings.length} prenotazioni · {totali.count} con importo lordo</span>
+              </div>
+
+              {monthBookings.length === 0 ? (
+                <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione in {MONTH_IT[month]} {year}.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: c.sabbia }}>
+                        <th style={{ ...thStyle, textAlign: "left", minWidth: 140 }}>Alloggio</th>
+                        <th style={{ ...thStyle, textAlign: "center" }}>Pren.</th>
+                        {COL_LABELS.map(h => <th key={h} style={thStyle}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {propEntries.map(([pid, { name, rows }], pi) => {
+                        const t = sumFin(rows);
+                        const vals = totRow(t);
+                        return (
+                          <tr key={pid} style={{ borderBottom: `1px solid ${c.sabbia}`, background: pi % 2 === 0 ? "#fff" : "rgba(212,201,181,0.15)" }}>
+                            <td style={{ padding: "10px 12px", fontWeight: 600, color: c.tabacco }}>{name}</td>
+                            <td style={{ ...tdNum, textAlign: "center", color: c.cammello }}>{rows.length}</td>
+                            {vals.map((v, vi) => (
+                              <td key={vi} style={{ ...tdNum, fontWeight: vi === vals.length - 1 ? 700 : 400, color: vi === vals.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
+                                {eur(v)}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+
+                      {/* Totale generale */}
+                      <tr style={{ borderTop: `2px solid ${c.tabacco}`, background: "rgba(44,36,22,0.06)" }}>
+                        <td style={{ padding: "11px 12px", fontWeight: 700, fontSize: 13, color: c.tabacco }}>Totale generale</td>
+                        <td style={{ ...tdNum, textAlign: "center", fontWeight: 700, color: c.tabacco }}>{monthBookings.length}</td>
+                        {totRow(totali).map((v, vi) => (
+                          <td key={vi} style={{ ...tdNum, fontWeight: 700, color: vi === COL_LABELS.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
+                            {eur(v)}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Dettaglio prenotazioni del mese */}
+              {monthBookings.length > 0 && (
+                <div style={{ marginTop: 36 }}>
+                  <p style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, marginBottom: 10 }}>Dettaglio prenotazioni</p>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${c.sabbia}` }}>
+                          {["Ospite","Alloggio","Arrivo","Notti","Canale","Lordo","Comm.","Netto OTA","Ced.","Netto Ric.","Pulizie","Utile"].map(h => (
+                            <th key={h} style={{ padding: "8px 10px", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {monthBookings.map((b, i) => {
+                          const g   = getGuest(b);
+                          const f   = calcFin(b);
+                          const nn  = Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / 86_400_000);
+                          return (
+                            <tr key={b.id} onClick={() => setSelectedBooking(b)} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)", cursor: "pointer" }}>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{g?.full_name ?? <span style={{ color: c.cammello, fontStyle: "italic" }}>—</span>}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{getPropName(b) ?? "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right", whiteSpace: "nowrap" }}>{fmt(b.check_in)}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{nn}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{fmtCh(b.channel)}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{b.gross_amount ? `€ ${b.gross_amount}` : "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.commissione_ota) : "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_dopo_comm) : "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.cedolare) : "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_ricevuto) : "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.costi_pulizie) : "—"}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: f ? (f.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{f ? eur(f.utile_reale) : "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ════════════════════════════════════════════════════════════
             FORM AGGIUNGI (collassabile)
@@ -690,6 +906,7 @@ export default function AdminPage() {
       {selectedBooking && (() => {
         const b = selectedBooking;
         const guest = getGuest(b);
+        const fin = calcFin(b);
         return (
           <div onClick={() => { setSelectedBooking(null); setDeleteConfirm(false); }}
             style={{ position: "fixed", inset: 0, background: "rgba(44,36,22,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -751,6 +968,34 @@ export default function AdminPage() {
                   </button>
                 )}
               </div>
+
+              {/* Breakdown finanziario */}
+              {fin && (
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, margin: "0 0 8px" }}>Riepilogo economico</p>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <tbody>
+                      {([
+                        ["Lordo OTA",       eur(b.gross_amount),       false],
+                        [`Comm. ${fmtCh(b.channel)} (${((OTA_COMMISSION[b.channel.toLowerCase()] ?? 0) * 100).toFixed(2)}%)`, `− ${eur(fin.commissione_ota)}`, true],
+                        ["Netto OTA",       eur(fin.netto_dopo_comm),  false],
+                        ["Cedolare 21%",    `− ${eur(fin.cedolare)}`,  true],
+                        ["Netto ricevuto",  eur(fin.netto_ricevuto),   false],
+                        ["Pulizie",         `− ${eur(fin.costi_pulizie)}`, true],
+                      ] as [string, string, boolean][]).map(([label, value, isDeduction]) => (
+                        <tr key={label} style={{ borderBottom: `1px solid ${c.sabbia}` }}>
+                          <td style={{ padding: "7px 0", color: isDeduction ? "#a03030" : c.tabacco }}>{label}</td>
+                          <td style={{ padding: "7px 0", textAlign: "right", color: isDeduction ? "#a03030" : c.tabacco }}>{value}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ borderTop: `2px solid ${c.tabacco}` }}>
+                        <td style={{ padding: "9px 0", fontWeight: 700, color: fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030", fontSize: 14 }}>Utile reale</td>
+                        <td style={{ padding: "9px 0", textAlign: "right", fontWeight: 700, color: fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030", fontSize: 14 }}>{eur(fin.utile_reale)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Note */}
               {fmtNote(b.notes) && (

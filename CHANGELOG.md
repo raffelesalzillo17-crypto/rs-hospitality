@@ -4,6 +4,20 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-25 (aggiornamento 29 — Logica finanziaria dashboard)
+
+### `lib/constants.ts`
+- Aggiunte costanti finanziarie: `OTA_COMMISSION` (Airbnb 18.91%, Booking 20.15%, Diretto/WhatsApp 0%), `CEDOLARE_RATE` (21%), `COSTI_PULIZIE` (€20 fisso)
+
+### `app/admin/page.tsx`
+- `calcFin(b)` — calcola per ogni prenotazione: commissione OTA, netto OTA, cedolare 21%, netto ricevuto, costi pulizie, utile reale
+- `eur(n)` — formattazione importi con simbolo € e 2 decimali
+- **Tab Prenotazioni**: aggiunte 6 colonne nella tabella — Comm. OTA, Netto OTA, Cedolare, Netto Ric., Pulizie, Utile (detrazioni in rosso, utile in verde/rosso grassetto)
+- **Bottom sheet**: sezione "Riepilogo economico" con tabella Lordo → Comm. → Netto OTA → Cedolare → Netto Ric. → Pulizie → **Utile reale** in grassetto
+- **Tab Report** (nuova): selettore mese ← →, tabella riepilogo per property + riga totale generale + dettaglio prenotazioni cliccabili; pulsante **Esporta CSV** scarica file UTF-8 BOM apribile in Excel e Google Sheets
+
+---
+
 ## [Unreleased] — 2026-03-25 (aggiornamento 28 — Autenticazione Supabase Auth su /admin)
 
 ### Nuovi file
