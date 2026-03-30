@@ -4,6 +4,16 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-30 (aggiornamento 35 — fix /admin: 4 bug)
+
+### Fix
+- **Fix 1 — "Prossimo arrivo" data passata**: `nextArrival` ora filtra `booking_type !== "block"` oltre a `check_in >= oggi`; i blocchi non comparivano mai come prossimo arrivo ma potevano skippare prenotazioni reali
+- **Fix 2 — Calendario mobile**: sostituita la vista "prossimi 30 giorni" con lista prenotazioni del mese corrente (sincronizzata al navigatore mese); card con nome ospite/canale, alloggio, date "12 apr → 15 apr (3 notti)", badge canale, badge "In corso" per soggiorni già avviati
+- **Fix 3 — Crash CSV upload**: aggiunto strip del BOM UTF-8 (`\uFEFF`) prima del parse; tutti gli accessi a `csvResult.errors` ora usano optional chaining (`?.length ?? 0`) per evitare TypeError su array null
+- **Fix 4 — Duplicati calendario**: `fetchBookings` ora deduplica per `uid_ical`: per ogni `uid_ical` non null viene tenuto l'ultimo record nell'array (le prenotazioni senza `uid_ical` vengono sempre mantenute)
+
+---
+
 ## [Unreleased] — 2026-03-30 (aggiornamento 34 — /admin mobile-first)
 
 ### Modificati

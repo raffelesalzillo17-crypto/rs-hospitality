@@ -28,6 +28,11 @@ function fmt(d: string) {
   const [y, m, day] = d.split("-");
   return `${day}/${m}/${y}`;
 }
+function fmtShort(d: string) {
+  if (!d) return "—";
+  const [, m, day] = d.split("-");
+  return `${parseInt(day, 10)} ${MONTH_IT[parseInt(m, 10) - 1]?.slice(0, 3).toLowerCase()}`;
+}
 function notti(a: string, b: string) {
   const n = Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
   return n > 0 ? `${n}n` : "—";
@@ -156,8 +161,17 @@ export default function AdminPage() {
       .from("bookings")
       .select("*, guests(full_name, phone, email), properties(id, name)")
       .order("check_in", { ascending: true });
-    if (error) setDbError(error.message);
-    else setBookings((data ?? []) as Booking[]);
+    if (error) { setDbError(error.message); }
+    else {
+      const raw = (data ?? []) as Booking[];
+      // Deduplicazione per uid_ical: tieni l'ultimo record per ogni uid_ical non null
+      const seen = new Map<string, Booking>();
+      for (const b of raw) {
+        if (!b.uid_ical) { seen.set(`__id_${b.id}`, b); }
+        else { seen.set(b.uid_ical, b); }
+      }
+      setBookings([...seen.values()]);
+    }
     setLoading(false);
   }, []);
 
@@ -262,7 +276,7 @@ export default function AdminPage() {
     if (!file) return;
     setCsvImporting(true); setCsvResult(null);
     try {
-      const csv = await file.text();
+      const csv = (await file.text()).replace(/^\uFEFF/, ""); // strip UTF-8 BOM
       const res = await fetch("/api/import-csv", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-RS-Secret": "rshospitality2026" },
@@ -293,7 +307,9 @@ export default function AdminPage() {
   const today = new Date().toISOString().slice(0, 10);
 
   const nextArrival = useMemo(() =>
-    [...bookings].filter(b => b.check_in >= today).sort((a, b) => a.check_in.localeCompare(b.check_in))[0] ?? null,
+    [...bookings]
+      .filter(b => b.booking_type !== "block" && b.check_in >= today)
+      .sort((a, b) => a.check_in.localeCompare(b.check_in))[0] ?? null,
     [bookings, today]
   );
 
@@ -314,23 +330,20 @@ export default function AdminPage() {
     return [...future, ...past];
   }, [bookings, today]);
 
-  // ── Mobile: prenotazioni attive + arrivi nei prossimi 30 giorni ──────────
-  const mobileOccupiedDays = useMemo(() => {
-    const in30 = new Date(today + "T00:00:00");
-    in30.setDate(in30.getDate() + 30);
-    const in30str = in30.toISOString().slice(0, 10);
+  // ── Mobile: prenotazioni del mese corrente nel calendario ────────────────
+  const mobileCalendarBookings = useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const primoGiorno  = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+    const ultimoGiorno = new Date(y, m + 1, 0).toISOString().slice(0, 10);
     return bookings
       .filter(b =>
         b.booking_type !== "block" &&
-        b.check_out > today &&
-        b.check_in <= in30str
+        b.check_in <= ultimoGiorno &&
+        b.check_out > primoGiorno
       )
-      .sort((a, bk) => a.check_in.localeCompare(bk.check_in))
-      .map(b => {
-        const prop = properties.find(p => p.id === b.property_id);
-        return { day: b.check_in, b, propName: prop?.name ?? "—" };
-      });
-  }, [today, bookings, properties]);
+      .sort((a, bk) => a.check_in.localeCompare(bk.check_in));
+  }, [bookings, currentMonth]);
 
   // ── Shared styles ─────────────────────────────────────────────────────────
   const inp: React.CSSProperties = {
@@ -426,62 +439,61 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* MOBILE: lista giorni occupati ─────────────────────── */}
+              {/* MOBILE: lista prenotazioni del mese corrente ──────── */}
               <div className="md:hidden">
-                <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, margin: "0 0 12px" }}>
-                  Prossimi 30 giorni
-                </p>
-                {mobileOccupiedDays.length === 0 ? (
-                  <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione nei prossimi 30 giorni.</p>
+                {/* Navigatore mese */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                  <button onClick={() => setCurrentMonth(d => { const n = new Date(d); n.setMonth(n.getMonth()-1); return n; })}
+                    style={{ height: 44, padding: "0 14px", background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
+                  <span style={{ fontSize: 15, fontWeight: 600, flex: 1, textAlign: "center" }}>
+                    {MONTH_IT[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                  </span>
+                  <button onClick={() => setCurrentMonth(d => { const n = new Date(d); n.setMonth(n.getMonth()+1); return n; })}
+                    style={{ height: 44, padding: "0 14px", background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
+                </div>
+
+                {mobileCalendarBookings.length === 0 ? (
+                  <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione in {MONTH_IT[currentMonth.getMonth()]} {currentMonth.getFullYear()}.</p>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {mobileOccupiedDays.map(({ day, b, propName }, idx) => {
+                    {mobileCalendarBookings.map((b, idx) => {
                       const guest = getGuest(b);
-                      const [, mm, dd] = day.split("-");
                       const badge = channelBadge(b.channel);
-                      const inCorso = b.check_in < today;
+                      const nn = Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / 86_400_000);
+                      const inCorso = b.check_in < today && b.check_out > today;
                       return (
-                        <div key={`${day}-${b.id}-${idx}`} onClick={() => setSelectedBooking(b)}
-                          style={{ background: inCorso ? "rgba(44,36,22,0.04)" : "#fff", border: `1px solid ${inCorso ? c.cammello : c.sabbia}`, borderRadius: 10, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, minHeight: 64 }}>
-                          {/* Badge data check-in */}
-                          <div style={{ minWidth: 44, textAlign: "center", background: inCorso ? c.cammello : c.sabbia, borderRadius: 8, padding: "6px 8px", flexShrink: 0 }}>
-                            <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, color: inCorso ? c.lino : c.tabacco }}>{dd}</div>
-                            <div style={{ fontSize: 9, color: inCorso ? "rgba(240,235,224,0.75)" : c.cammello, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
-                              {MONTH_IT[parseInt(mm, 10) - 1]?.slice(0, 3)}
-                            </div>
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: c.tabacco, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                                {b.booking_type === "block" ? "Blocco" : (guest?.full_name ?? "—")}
-                              </div>
+                        <div key={`cal-${b.id}-${idx}`} onClick={() => setSelectedBooking(b)}
+                          style={{ background: "#fff", border: `1px solid ${c.sabbia}`, borderRadius: 10, padding: "14px 16px", cursor: "pointer", minHeight: 72 }}>
+                          {/* Riga 1: nome + badge canale */}
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
+                            <span style={{ fontSize: 15, fontWeight: 500, color: c.tabacco, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {guest?.full_name ?? fmtCh(b.channel)}
+                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                               {inCorso && (
-                                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: c.lino, background: c.cammello, padding: "2px 6px", borderRadius: 4, flexShrink: 0 }}>
+                                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: c.lino, background: c.cammello, padding: "2px 6px", borderRadius: 4 }}>
                                   In corso
                                 </span>
                               )}
-                            </div>
-                            <div style={{ fontSize: 12, color: c.cammello }}>
-                              {propName} · {notti(b.check_in, b.check_out)}
+                              <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 9px", borderRadius: 20, background: badge.bg, color: badge.color }}>
+                                {fmtCh(b.channel)}
+                              </span>
                             </div>
                           </div>
-                          <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 20, background: badge.bg, color: badge.color, flexShrink: 0 }}>
-                            {fmtCh(b.channel)}
-                          </span>
+                          {/* Riga 2: alloggio */}
+                          {getPropName(b) && (
+                            <div style={{ fontSize: 12, color: c.cammello, marginBottom: 4 }}>{getPropName(b)}</div>
+                          )}
+                          {/* Riga 3: date */}
+                          <div style={{ fontSize: 13, color: c.tabacco }}>
+                            {fmtShort(b.check_in)} → {fmtShort(b.check_out)}
+                            <span style={{ color: c.cammello, marginLeft: 6 }}>({nn} {nn === 1 ? "notte" : "notti"})</span>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
-                {/* Legenda mobile */}
-                <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
-                  {[["#2d6a4f","Confermata"], ["#c9963a","In attesa"], ["#555","Blocco"]].map(([col, label]) => (
-                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: 3, background: col }} />
-                      <span style={{ fontSize: 11, color: c.cammello }}>{label}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* DESKTOP: griglia calendario ────────────────────────── */}
@@ -705,10 +717,10 @@ export default function AdminPage() {
                   <input type="file" accept=".csv" style={{ display: "none" }} disabled={csvImporting} onChange={handleCsvImport} />
                 </label>
                 {csvResult && (
-                  <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: csvResult.errors.length ? "#fef3cd" : "#d0ead0", color: csvResult.errors.length ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
+                  <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: (csvResult.errors?.length ?? 0) > 0 ? "#fef3cd" : "#d0ead0", color: (csvResult.errors?.length ?? 0) > 0 ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
                     {(csvResult.created ?? 0) > 0 && <><strong>{csvResult.created} create</strong>, </>}
                     <strong>{csvResult.updated} aggiornate</strong>{csvResult.skipped > 0 ? `, ${csvResult.skipped} saltate` : ""}.
-                    {csvResult.errors.length > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
+                    {(csvResult.errors?.length ?? 0) > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
                   </div>
                 )}
               </div>
