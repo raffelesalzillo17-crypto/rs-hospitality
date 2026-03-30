@@ -4,6 +4,19 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-30 (aggiornamento 34 — /admin mobile-first)
+
+### Modificati
+- `app/admin/page.tsx` — layout /admin completamente mobile-first:
+  - **Tab Prenotazioni**: card verticali su mobile (nome ospite + badge canale, date + alloggio, lordo + utile reale); tabella desktop invariata
+  - **Tab Calendario**: lista verticale prossimi 30 giorni su mobile (solo giorni occupati); griglia orizzontale visibile solo su desktop (md:)
+    - Fix: ora include anche prenotazioni già in corso (check_in < oggi), con badge "In corso" visivo
+  - **Tab Report**: totali lordo/utile grandi in cima su mobile; lista prenotazioni mese come card compatte sotto
+  - **Navigazione**: tab bar nativa in fondo allo schermo su mobile (Calendario / Prenotazioni / Report); tab bar in cima solo su desktop
+  - Tutti gli elementi interattivi ≥ 44px di altezza — usabile con una mano
+
+---
+
 ## [Unreleased] — 2026-03-30 (aggiornamento 33 — pulizia progetto)
 
 ### Eliminati

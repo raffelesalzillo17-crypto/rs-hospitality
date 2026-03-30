@@ -56,6 +56,7 @@ function barLabel(b: Booking): string {
   if (b.booking_type === "block") return "Blocco";
   return getGuest(b)?.full_name ?? fmtCh(b.channel);
 }
+
 // ── Logica finanziaria ────────────────────────────────────────────────────────
 function calcFin(b: Booking) {
   const g = b.gross_amount;
@@ -93,6 +94,18 @@ function buildBookingMap(bookings: Booking[]) {
     }
   }
   return map;
+}
+
+// ── Badge canale ──────────────────────────────────────────────────────────────
+const CHANNEL_BADGE: Record<string, { bg: string; color: string }> = {
+  airbnb:   { bg: "#FF5A5F", color: "#fff" },
+  booking:  { bg: "#003580", color: "#fff" },
+  diretto:  { bg: "#2d6a4f", color: "#fff" },
+  "no tax": { bg: "#6b5c47", color: "#fff" },
+  no_tax:   { bg: "#6b5c47", color: "#fff" },
+};
+function channelBadge(ch: string) {
+  return CHANNEL_BADGE[ch.toLowerCase()] ?? { bg: c.cammello, color: "#fff" };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -301,6 +314,24 @@ export default function AdminPage() {
     return [...future, ...past];
   }, [bookings, today]);
 
+  // ── Mobile: prenotazioni attive + arrivi nei prossimi 30 giorni ──────────
+  const mobileOccupiedDays = useMemo(() => {
+    const in30 = new Date(today + "T00:00:00");
+    in30.setDate(in30.getDate() + 30);
+    const in30str = in30.toISOString().slice(0, 10);
+    return bookings
+      .filter(b =>
+        b.booking_type !== "block" &&
+        b.check_out > today &&
+        b.check_in <= in30str
+      )
+      .sort((a, bk) => a.check_in.localeCompare(bk.check_in))
+      .map(b => {
+        const prop = properties.find(p => p.id === b.property_id);
+        return { day: b.check_in, b, propName: prop?.name ?? "—" };
+      });
+  }, [today, bookings, properties]);
+
   // ── Shared styles ─────────────────────────────────────────────────────────
   const inp: React.CSSProperties = {
     width: "100%", padding: "10px 12px", border: `1px solid ${c.cammello}`,
@@ -318,25 +349,23 @@ export default function AdminPage() {
     <div style={{ minHeight: "100vh", background: c.lino, color: c.tabacco, fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif" }}>
 
       {/* ── HEADER ── */}
-      <header style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", background: c.lino, flexWrap: "wrap", gap: 12 }}>
+      <header style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", background: c.lino, gap: 8 }}>
         <div>
-          <span style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: c.cammello }}>RS Hospitality</span>
-          <h1 style={{ fontSize: 22, fontWeight: 600, marginTop: 2, color: c.tabacco, letterSpacing: "-0.01em" }}>RS Central</h1>
+          <span style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: c.cammello }}>RS Hospitality</span>
+          <h1 style={{ fontSize: 17, fontWeight: 600, marginTop: 1, color: c.tabacco, letterSpacing: "-0.01em" }}>RS Central</h1>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button onClick={handleSync} disabled={syncing} style={{ padding: "8px 16px", border: `1px solid ${c.tabacco}`, borderRadius: 3, background: c.tabacco, color: c.lino, fontSize: 13, cursor: syncing ? "default" : "pointer", opacity: syncing ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
-            {syncing ? "Sincronizzazione..." : "⟳ Sincronizza"}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button onClick={handleSync} disabled={syncing}
+            style={{ padding: "0 14px", height: 44, border: `1px solid ${c.tabacco}`, borderRadius: 3, background: c.tabacco, color: c.lino, fontSize: 13, cursor: syncing ? "default" : "pointer", opacity: syncing ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
+            {syncing ? "..." : "⟳ Sync"}
           </button>
-          <button onClick={fetchBookings} style={{ padding: "8px 16px", border: `1px solid ${c.cammello}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-            ↻ Aggiorna
+          <button onClick={fetchBookings}
+            style={{ padding: "0 12px", height: 44, border: `1px solid ${c.cammello}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
+            ↻
           </button>
           <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push("/admin/login");
-            }}
-            style={{ padding: "8px 16px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}
-          >
+            onClick={async () => { await supabase.auth.signOut(); router.push("/admin/login"); }}
+            style={{ padding: "0 12px", height: 44, border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             Esci
           </button>
         </div>
@@ -344,520 +373,696 @@ export default function AdminPage() {
 
       {/* ── SYNC BANNER ── */}
       {syncResult && (
-        <div style={{ margin: "0 24px", padding: "10px 16px", borderRadius: 3, fontSize: 13, background: syncResult.errori.length ? "#fef3cd" : "#d0ead0", color: syncResult.errori.length ? "#6b4c00" : "#1a4d1a", borderLeft: `4px solid ${syncResult.errori.length ? "#e6a817" : "#2e7d32"}` }}>
-          <strong>Sincronizzazione:</strong> {syncResult.sincronizzati} importate, {syncResult.skippati} già presenti.
+        <div style={{ margin: "8px 16px", padding: "10px 16px", borderRadius: 3, fontSize: 13, background: syncResult.errori.length ? "#fef3cd" : "#d0ead0", color: syncResult.errori.length ? "#6b4c00" : "#1a4d1a", borderLeft: `4px solid ${syncResult.errori.length ? "#e6a817" : "#2e7d32"}` }}>
+          <strong>Sync:</strong> {syncResult.sincronizzati} importate, {syncResult.skippati} già presenti.
           {syncResult.errori.length > 0 && <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>{syncResult.errori.map((e, i) => <li key={i}>{e}</li>)}</ul>}
         </div>
       )}
 
-      {/* ── TABS ── */}
-      <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${c.sabbia}`, padding: "0 24px", background: c.lino }}>
+      {/* ── TAB BAR DESKTOP (nascosta su mobile) ── */}
+      <div className="hidden md:flex" style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "0 24px", background: c.lino }}>
         {(["calendario", "prenotazioni", "report", "import"] as const).map(tab => (
-          <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "import") fetchImportLogs(); }} style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "capitalize", letterSpacing: "0.04em" }}>
-            {tab === "import" ? "Import Log" : tab === "report" ? "Report" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+          <button key={tab}
+            onClick={() => { setActiveTab(tab); if (tab === "import") fetchImportLogs(); }}
+            style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "capitalize", letterSpacing: "0.04em" }}>
+            {tab === "import" ? "Import Log" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
 
-      <main style={{ maxWidth: 1300, margin: "0 auto", padding: "28px 24px 60px" }}>
-        {dbError && <div style={{ padding: "12px 16px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13, marginBottom: 20 }}>Errore: {dbError}</div>}
-        {loading && <p style={{ color: c.cammello, fontSize: 14 }}>Caricamento...</p>}
+      {/* ── MAIN ── */}
+      {/* pb-24 su mobile per la tab bar fissa in fondo */}
+      <main className="pb-24 md:pb-16" style={{ maxWidth: 1300, margin: "0 auto", padding: "20px 16px 0" }}>
+        <div className="md:px-2">
+          {dbError && <div style={{ padding: "12px 16px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13, marginBottom: 20 }}>Errore: {dbError}</div>}
+          {loading && <p style={{ color: c.cammello, fontSize: 14 }}>Caricamento...</p>}
 
-        {/* ════════════════════════════════════════════════════════════
-            TAB: CALENDARIO
-        ════════════════════════════════════════════════════════════ */}
-        {!loading && activeTab === "calendario" && (
-          <div>
-            {/* Prossimo arrivo */}
-            {nextArrival && (
-              <div onClick={() => setSelectedBooking(nextArrival)} style={{ background: c.tabacco, borderRadius: 10, padding: "20px 24px", marginBottom: 24, cursor: "pointer", display: "flex", flexWrap: "wrap", gap: 24, alignItems: "center" }}>
-                <div>
+          {/* ══════════════════════════════════════════════════════════
+              TAB: CALENDARIO
+          ══════════════════════════════════════════════════════════ */}
+          {!loading && activeTab === "calendario" && (
+            <div>
+              {/* Prossimo arrivo */}
+              {nextArrival && (
+                <div onClick={() => setSelectedBooking(nextArrival)}
+                  style={{ background: c.tabacco, borderRadius: 10, padding: "16px 20px", marginBottom: 20, cursor: "pointer" }}>
                   <p style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: c.sabbia, margin: "0 0 4px" }}>Prossimo arrivo</p>
-                  <p style={{ fontSize: 22, fontWeight: 500, color: c.lino, margin: 0 }}>
+                  <p style={{ fontSize: 20, fontWeight: 500, color: c.lino, margin: "0 0 10px" }}>
                     {getGuest(nextArrival)?.full_name ?? "—"}
                   </p>
+                  <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                    {[
+                      ["Alloggio", getPropName(nextArrival) ?? "—"],
+                      ["Arrivo",   fmt(nextArrival.check_in)],
+                      ["Notti",    notti(nextArrival.check_in, nextArrival.check_out)],
+                      ["Canale",   fmtCh(nextArrival.channel)],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <p style={{ fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: c.sabbia, margin: "0 0 2px" }}>{k}</p>
+                        <p style={{ fontSize: 13, color: c.lino, margin: 0, fontWeight: 500 }}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-                  {[
-                    ["Alloggio",  getPropName(nextArrival) ?? "—"],
-                    ["Arrivo",    fmt(nextArrival.check_in)],
-                    ["Notti",     notti(nextArrival.check_in, nextArrival.check_out)],
-                    ["Canale",    fmtCh(nextArrival.channel)],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.sabbia, margin: "0 0 2px" }}>{k}</p>
-                      <p style={{ fontSize: 15, color: c.lino, margin: 0, fontWeight: 500 }}>{v}</p>
+              )}
+
+              {/* MOBILE: lista giorni occupati ─────────────────────── */}
+              <div className="md:hidden">
+                <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, margin: "0 0 12px" }}>
+                  Prossimi 30 giorni
+                </p>
+                {mobileOccupiedDays.length === 0 ? (
+                  <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione nei prossimi 30 giorni.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {mobileOccupiedDays.map(({ day, b, propName }, idx) => {
+                      const guest = getGuest(b);
+                      const [, mm, dd] = day.split("-");
+                      const badge = channelBadge(b.channel);
+                      const inCorso = b.check_in < today;
+                      return (
+                        <div key={`${day}-${b.id}-${idx}`} onClick={() => setSelectedBooking(b)}
+                          style={{ background: inCorso ? "rgba(44,36,22,0.04)" : "#fff", border: `1px solid ${inCorso ? c.cammello : c.sabbia}`, borderRadius: 10, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, minHeight: 64 }}>
+                          {/* Badge data check-in */}
+                          <div style={{ minWidth: 44, textAlign: "center", background: inCorso ? c.cammello : c.sabbia, borderRadius: 8, padding: "6px 8px", flexShrink: 0 }}>
+                            <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, color: inCorso ? c.lino : c.tabacco }}>{dd}</div>
+                            <div style={{ fontSize: 9, color: inCorso ? "rgba(240,235,224,0.75)" : c.cammello, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
+                              {MONTH_IT[parseInt(mm, 10) - 1]?.slice(0, 3)}
+                            </div>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                              <div style={{ fontSize: 15, fontWeight: 500, color: c.tabacco, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                                {b.booking_type === "block" ? "Blocco" : (guest?.full_name ?? "—")}
+                              </div>
+                              {inCorso && (
+                                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: c.lino, background: c.cammello, padding: "2px 6px", borderRadius: 4, flexShrink: 0 }}>
+                                  In corso
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 12, color: c.cammello }}>
+                              {propName} · {notti(b.check_in, b.check_out)}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 20, background: badge.bg, color: badge.color, flexShrink: 0 }}>
+                            {fmtCh(b.channel)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Legenda mobile */}
+                <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
+                  {[["#2d6a4f","Confermata"], ["#c9963a","In attesa"], ["#555","Blocco"]].map(([col, label]) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 3, background: col }} />
+                      <span style={{ fontSize: 11, color: c.cammello }}>{label}</span>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Nav mese */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-              <button onClick={() => setCurrentMonth(d => { const n = new Date(d); n.setMonth(n.getMonth()-1); return n; })} style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
-              <span style={{ fontSize: 15, fontWeight: 600, minWidth: 140, textAlign: "center" }}>
-                {MONTH_IT[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-              </span>
-              <button onClick={() => setCurrentMonth(d => { const n = new Date(d); n.setMonth(n.getMonth()+1); return n; })} style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
-            </div>
+              {/* DESKTOP: griglia calendario ────────────────────────── */}
+              <div className="hidden md:block">
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                  <button onClick={() => setCurrentMonth(d => { const n = new Date(d); n.setMonth(n.getMonth()-1); return n; })}
+                    style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
+                  <span style={{ fontSize: 15, fontWeight: 600, minWidth: 140, textAlign: "center" }}>
+                    {MONTH_IT[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                  </span>
+                  <button onClick={() => setCurrentMonth(d => { const n = new Date(d); n.setMonth(n.getMonth()+1); return n; })}
+                    style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
+                </div>
 
-            {/* Griglia calendario */}
-            <div style={{ overflowX: "auto", borderRadius: 8, border: `1px solid ${c.sabbia}` }}>
-              <table style={{ borderCollapse: "collapse", width: "100%", minWidth: calendarDays.length * 36 + 120 }}>
-                <thead>
-                  <tr style={{ background: c.sabbia }}>
-                    <th style={{ padding: "8px 12px", textAlign: "left", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.tabacco, minWidth: 120, position: "sticky", left: 0, background: c.sabbia, zIndex: 1 }}>Alloggio</th>
-                    {calendarDays.map(day => {
-                      const d = parseInt(day.slice(8));
-                      const isToday = day === today;
-                      return (
-                        <th key={day} style={{ padding: "6px 0", textAlign: "center", fontSize: 11, color: isToday ? c.cammello : c.tabacco, fontWeight: isToday ? 700 : 400, minWidth: 32, border: isToday ? `1px solid ${c.cammello}` : undefined, borderRadius: 3 }}>
-                          {d}
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {properties.map((prop, pi) => {
-                    const propMap = bookingMap.get(prop.id);
-                    return (
-                      <tr key={prop.id} style={{ background: pi % 2 === 0 ? "#fff" : "rgba(212,201,181,0.15)", borderBottom: `1px solid ${c.sabbia}` }}>
-                        <td style={{ padding: "6px 12px", fontSize: 13, fontWeight: 500, color: c.tabacco, whiteSpace: "nowrap", position: "sticky", left: 0, background: pi % 2 === 0 ? "#fff" : "rgba(240,235,224,0.9)", zIndex: 1 }}>
-                          {prop.name}
-                        </td>
+                <div style={{ overflowX: "auto", borderRadius: 8, border: `1px solid ${c.sabbia}` }}>
+                  <table style={{ borderCollapse: "collapse", width: "100%", minWidth: calendarDays.length * 36 + 120 }}>
+                    <thead>
+                      <tr style={{ background: c.sabbia }}>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.tabacco, minWidth: 120, position: "sticky", left: 0, background: c.sabbia, zIndex: 1 }}>Alloggio</th>
                         {calendarDays.map(day => {
-                          const cell = propMap?.get(day);
-                          if (!cell) return <td key={day} style={{ minWidth: 32, height: 32 }} />;
-                          const { b, isStart, isEnd } = cell;
-                          const bg = barColor(b);
-                          const br = isStart && isEnd ? "6px" : isStart ? "6px 0 0 6px" : isEnd ? "0 6px 6px 0" : "0";
+                          const d = parseInt(day.slice(8));
+                          const isToday = day === today;
                           return (
-                            <td key={day} onClick={() => setSelectedBooking(b)}
-                              style={{ minWidth: 32, height: 32, background: bg, borderRadius: br, cursor: "pointer", verticalAlign: "middle", paddingLeft: isStart ? 6 : 0, overflow: "hidden", maxWidth: 80 }}>
-                              {isStart && (
-                                <span style={{ fontSize: 10, color: "#fff", whiteSpace: "nowrap", fontWeight: 600 }}>
-                                  {barLabel(b)}
-                                </span>
-                              )}
-                            </td>
+                            <th key={day} style={{ padding: "6px 0", textAlign: "center", fontSize: 11, color: isToday ? c.cammello : c.tabacco, fontWeight: isToday ? 700 : 400, minWidth: 32, border: isToday ? `1px solid ${c.cammello}` : undefined, borderRadius: 3 }}>
+                              {d}
+                            </th>
                           );
                         })}
                       </tr>
-                    );
-                  })}
-                  {properties.length === 0 && (
-                    <tr><td colSpan={calendarDays.length + 1} style={{ padding: 20, color: c.cammello, fontSize: 13 }}>Nessun alloggio attivo.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Legenda */}
-            <div style={{ display: "flex", gap: 20, marginTop: 12, flexWrap: "wrap" }}>
-              {[["#2d6a4f","Confermata"], ["#c9963a","In attesa"], ["#aaa","Blocco iCal"]].map(([col, label]) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 16, height: 10, borderRadius: 3, background: col }} />
-                  <span style={{ fontSize: 12, color: c.cammello }}>{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════════════════════════
-            TAB: PRENOTAZIONI
-        ════════════════════════════════════════════════════════════ */}
-        {!loading && activeTab === "prenotazioni" && (
-          <div style={{ overflowX: "auto" }}>
-            {sortedBookings.length === 0
-              ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione.</p>
-              : (
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
-                      {["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Comm. OTA","Netto OTA","Cedolare","Netto Ric.","Pulizie","Utile","Stato","Pagamento","Check-in"].map(h => (
-                        <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedBookings.map((b, i) => {
-                      const guest = getGuest(b);
-                      const isPast = b.check_out < today;
-                      const rowBg = i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)";
-                      const fin = calcFin(b);
-                      return (
-                        <tr key={b.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: rowBg, opacity: isPast ? 0.5 : 1, cursor: "pointer" }} onClick={() => setSelectedBooking(b)}>
-                          <td style={{ padding: "11px 12px" }}>
-                            {guest?.full_name
-                              ? <div style={{ fontWeight: 500 }}>{guest.full_name}</div>
-                              : <div style={{ color: c.cammello, fontStyle: "italic" }}>Ospite non identificato</div>
-                            }
-                            {guest?.phone && <div style={{ fontSize: 11, color: c.cammello }}>{guest.phone}</div>}
-                          </td>
-                          <td style={{ padding: "11px 12px" }}>{getPropName(b) ?? <span style={{ color: c.sabbia }}>—</span>}</td>
-                          <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }}>{fmt(b.check_in)}</td>
-                          <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }}>{fmt(b.check_out)}</td>
-                          <td style={{ padding: "11px 12px", color: c.cammello, textAlign: "center" }}>{notti(b.check_in, b.check_out)}</td>
-                          <td style={{ padding: "11px 12px" }}>{fmtCh(b.channel)}</td>
-                          <td style={{ padding: "11px 12px", color: b.gross_amount ? c.tabacco : c.sabbia }}>
-                            {b.gross_amount ? `€ ${b.gross_amount}` : "—"}
-                          </td>
-                          <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.commissione_ota) : "—"}</td>
-                          <td style={{ padding: "11px 12px", color: fin ? c.tabacco : c.sabbia }}>{fin ? eur(fin.netto_dopo_comm) : "—"}</td>
-                          <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.cedolare) : "—"}</td>
-                          <td style={{ padding: "11px 12px", color: fin ? c.tabacco : c.sabbia }}>{fin ? eur(fin.netto_ricevuto) : "—"}</td>
-                          <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.costi_pulizie) : "—"}</td>
-                          <td style={{ padding: "11px 12px", fontWeight: 600, color: fin ? (fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{fin ? eur(fin.utile_reale) : "—"}</td>
-                          <td style={{ padding: "11px 12px" }}>
-                            <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: STATUS_STYLE[b.status]?.bg ?? c.sabbia, color: STATUS_STYLE[b.status]?.color ?? c.tabacco }}>
-                              {STATUS_LABEL[b.status] ?? b.status}
-                            </span>
-                          </td>
-                          <td style={{ padding: "11px 12px" }} onClick={e => { e.stopPropagation(); setEditPrice({ id: b.id, value: b.total_price?.toString() ?? "" }); }}>
-                            {editPrice?.id === b.id ? (
-                              <input
-                                autoFocus
-                                style={{ width: 80, padding: "4px 6px", border: `1px solid ${c.cammello}`, borderRadius: 4, fontSize: 13, fontFamily: "inherit" }}
-                                value={editPrice.value}
-                                onChange={e => setEditPrice({ id: b.id, value: e.target.value })}
-                                onBlur={() => savePrice(b.id, editPrice.value)}
-                                onKeyDown={e => { if (e.key === "Enter") savePrice(b.id, editPrice.value); if (e.key === "Escape") setEditPrice(null); }}
-                              />
-                            ) : (
-                              <span style={{ color: b.total_price ? c.tabacco : c.sabbia }}>
-                                {b.total_price ? `€${b.total_price}` : "—"}
-                              </span>
-                            )}
-                          </td>
-                          <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }} onClick={e => e.stopPropagation()}>
-                            {copiedId === b.id
-                              ? <span style={{ fontSize: 12, color: "#1a4d1a", fontWeight: 600 }}>Copiato!</span>
-                              : b.guest_id !== null
-                              ? <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>Completato</span>
-                              : <button onClick={() => copyLink(b.id)} style={{ padding: "4px 10px", background: c.cammello, color: "#fff", border: "none", borderRadius: 4, fontSize: 12, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>Link</button>
-                            }
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )
-            }
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════════════════════════
-            TAB: IMPORT LOG
-        ════════════════════════════════════════════════════════════ */}
-        {activeTab === "import" && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: 0, letterSpacing: "-0.01em" }}>Ultimi 10 import email</h2>
-              <button onClick={fetchImportLogs} style={{ padding: "6px 14px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "none", fontSize: 12, color: c.cammello, fontFamily: "inherit", cursor: "pointer" }}>Aggiorna</button>
-            </div>
-            {/* Import storico CSV */}
-            <div style={{ marginBottom: 32, background: c.sabbia, borderRadius: 6, padding: "20px 24px" }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: c.tabacco, margin: "0 0 4px", letterSpacing: "0.04em", textTransform: "uppercase" }}>Import storico CSV</p>
-              <p style={{ fontSize: 12, color: c.cammello, margin: "0 0 14px" }}>Carica il CSV esportato da Airbnb per aggiornare nome ospite e importo sulle prenotazioni esistenti.</p>
-              <label style={{ display: "inline-block", padding: "9px 18px", background: c.tabacco, color: c.lino, borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: csvImporting ? "default" : "pointer", opacity: csvImporting ? 0.6 : 1, letterSpacing: "0.04em" }}>
-                {csvImporting ? "Importazione…" : "Scegli file CSV"}
-                <input type="file" accept=".csv" style={{ display: "none" }} disabled={csvImporting} onChange={handleCsvImport} />
-              </label>
-              {csvResult && (
-                <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: csvResult.errors.length ? "#fef3cd" : "#d0ead0", color: csvResult.errors.length ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
-                  {(csvResult.created ?? 0) > 0 && <><strong>{csvResult.created} create</strong>, </>}
-                  <strong>{csvResult.updated} aggiornate</strong>{csvResult.skipped > 0 ? `, ${csvResult.skipped} saltate` : ""}.
-                  {csvResult.errors.length > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
-                </div>
-              )}
-            </div>
-
-          {importLogs.length === 0
-              ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessun import ancora.</p>
-              : (
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
-                      {["Data", "Canale", "Ospite", "Ref.", "Azione", "Errore"].map(h => (
-                        <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {importLogs.map((log, i) => {
-                      const actionStyle: Record<string, { bg: string; color: string }> = {
-                        created: { bg: "#d0ead0", color: "#1a4d1a" },
-                        updated: { bg: "#fef3cd", color: "#6b4c00" },
-                        skipped: { bg: "#e8e8e8", color: "#555" },
-                        error:   { bg: "#fad7d7", color: "#7a1a1a" },
-                      };
-                      const style = actionStyle[log.action ?? ""] ?? { bg: c.sabbia, color: c.tabacco };
-                      const dt = log.created_at ? new Date(log.created_at) : null;
-                      const dateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")} ${dt.getHours().toString().padStart(2,"0")}:${dt.getMinutes().toString().padStart(2,"0")}` : "—";
-                      return (
-                        <tr key={log.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)" }}>
-                          <td style={{ padding: "10px 12px", whiteSpace: "nowrap", color: c.cammello, fontSize: 12 }}>{dateStr}</td>
-                          <td style={{ padding: "10px 12px", textTransform: "capitalize" }}>{log.channel ?? "—"}</td>
-                          <td style={{ padding: "10px 12px" }}>{log.guest_name ?? "—"}</td>
-                          <td style={{ padding: "10px 12px", fontFamily: "monospace", fontSize: 12, color: c.cammello }}>{log.booking_ref ?? "—"}</td>
-                          <td style={{ padding: "10px 12px" }}>
-                            <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: style.bg, color: style.color }}>{log.action ?? "—"}</span>
-                          </td>
-                          <td style={{ padding: "10px 12px", fontSize: 12, color: "#7a1a1a", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={log.error_message ?? ""}>{log.error_message ?? ""}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )
-            }
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════════════════════════
-            TAB: REPORT
-        ════════════════════════════════════════════════════════════ */}
-        {activeTab === "report" && (() => {
-          const { year, month } = reportMonth;
-
-          // Prenotazioni reali del mese selezionato (per check_in)
-          const monthBookings = bookings.filter(b =>
-            b.booking_type !== "block" &&
-            b.check_in.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)
-          );
-
-          // Raggruppa per property
-          const byProp = new Map<string, { name: string; rows: Booking[] }>();
-          for (const b of monthBookings) {
-            const pid  = b.property_id ?? "__none__";
-            const name = getPropName(b) ?? "Senza alloggio";
-            if (!byProp.has(pid)) byProp.set(pid, { name, rows: [] });
-            byProp.get(pid)!.rows.push(b);
-          }
-
-          type FinTotals = { lordo: number; commissioni: number; netto_ota: number; cedolare: number; netto_ricevuto: number; pulizie: number; utile: number; count: number };
-          function sumFin(rows: Booking[]): FinTotals {
-            let t: FinTotals = { lordo: 0, commissioni: 0, netto_ota: 0, cedolare: 0, netto_ricevuto: 0, pulizie: 0, utile: 0, count: 0 };
-            for (const b of rows) {
-              const f = calcFin(b);
-              if (!f) continue;
-              t.count++;
-              t.lordo         += b.gross_amount ?? 0;
-              t.commissioni   += f.commissione_ota;
-              t.netto_ota     += f.netto_dopo_comm;
-              t.cedolare      += f.cedolare;
-              t.netto_ricevuto+= f.netto_ricevuto;
-              t.pulizie       += f.costi_pulizie;
-              t.utile         += f.utile_reale;
-            }
-            return t;
-          }
-
-          const propEntries = [...byProp.entries()];
-          const totali = sumFin(monthBookings);
-
-          const COL_LABELS = ["Lordo", "Comm. OTA", "Netto OTA", "Cedolare", "Netto Ric.", "Pulizie", "Utile"];
-          function totRow(t: FinTotals) {
-            return [t.lordo, t.commissioni, t.netto_ota, t.cedolare, t.netto_ricevuto, t.pulizie, t.utile];
-          }
-
-
-
-          const thStyle: React.CSSProperties = { padding: "9px 12px", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" };
-          const tdNum: React.CSSProperties   = { padding: "9px 12px", textAlign: "right", fontSize: 13 };
-
-          return (
-            <div>
-              {/* Selettore mese */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 0 ? { year: y - 1, month: 11 } : { year: y, month: m - 1 })}
-                    style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
-                  <span style={{ fontSize: 15, fontWeight: 600, minWidth: 160, textAlign: "center" }}>
-                    {MONTH_IT[month]} {year}
-                  </span>
-                  <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 })}
-                    style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
-                </div>
-                <span style={{ fontSize: 12, color: c.cammello }}>{monthBookings.length} prenotazioni · {totali.count} con importo lordo</span>
-              </div>
-
-              {monthBookings.length === 0 ? (
-                <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione in {MONTH_IT[month]} {year}.</p>
-              ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ background: c.sabbia }}>
-                        <th style={{ ...thStyle, textAlign: "left", minWidth: 140 }}>Alloggio</th>
-                        <th style={{ ...thStyle, textAlign: "center" }}>Pren.</th>
-                        {COL_LABELS.map(h => <th key={h} style={thStyle}>{h}</th>)}
-                      </tr>
                     </thead>
                     <tbody>
-                      {propEntries.map(([pid, { name, rows }], pi) => {
-                        const t = sumFin(rows);
-                        const vals = totRow(t);
+                      {properties.map((prop, pi) => {
+                        const propMap = bookingMap.get(prop.id);
                         return (
-                          <tr key={pid} style={{ borderBottom: `1px solid ${c.sabbia}`, background: pi % 2 === 0 ? "#fff" : "rgba(212,201,181,0.15)" }}>
-                            <td style={{ padding: "10px 12px", fontWeight: 600, color: c.tabacco }}>{name}</td>
-                            <td style={{ ...tdNum, textAlign: "center", color: c.cammello }}>{rows.length}</td>
-                            {vals.map((v, vi) => (
-                              <td key={vi} style={{ ...tdNum, fontWeight: vi === vals.length - 1 ? 700 : 400, color: vi === vals.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
-                                {eur(v)}
-                              </td>
-                            ))}
+                          <tr key={prop.id} style={{ background: pi % 2 === 0 ? "#fff" : "rgba(212,201,181,0.15)", borderBottom: `1px solid ${c.sabbia}` }}>
+                            <td style={{ padding: "6px 12px", fontSize: 13, fontWeight: 500, color: c.tabacco, whiteSpace: "nowrap", position: "sticky", left: 0, background: pi % 2 === 0 ? "#fff" : "rgba(240,235,224,0.9)", zIndex: 1 }}>
+                              {prop.name}
+                            </td>
+                            {calendarDays.map(day => {
+                              const cell = propMap?.get(day);
+                              if (!cell) return <td key={day} style={{ minWidth: 32, height: 32 }} />;
+                              const { b, isStart, isEnd } = cell;
+                              const bg = barColor(b);
+                              const br = isStart && isEnd ? "6px" : isStart ? "6px 0 0 6px" : isEnd ? "0 6px 6px 0" : "0";
+                              return (
+                                <td key={day} onClick={() => setSelectedBooking(b)}
+                                  style={{ minWidth: 32, height: 32, background: bg, borderRadius: br, cursor: "pointer", verticalAlign: "middle", paddingLeft: isStart ? 6 : 0, overflow: "hidden", maxWidth: 80 }}>
+                                  {isStart && (
+                                    <span style={{ fontSize: 10, color: "#fff", whiteSpace: "nowrap", fontWeight: 600 }}>
+                                      {barLabel(b)}
+                                    </span>
+                                  )}
+                                </td>
+                              );
+                            })}
                           </tr>
                         );
                       })}
-
-                      {/* Totale generale */}
-                      <tr style={{ borderTop: `2px solid ${c.tabacco}`, background: "rgba(44,36,22,0.06)" }}>
-                        <td style={{ padding: "11px 12px", fontWeight: 700, fontSize: 13, color: c.tabacco }}>Totale generale</td>
-                        <td style={{ ...tdNum, textAlign: "center", fontWeight: 700, color: c.tabacco }}>{monthBookings.length}</td>
-                        {totRow(totali).map((v, vi) => (
-                          <td key={vi} style={{ ...tdNum, fontWeight: 700, color: vi === COL_LABELS.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
-                            {eur(v)}
-                          </td>
-                        ))}
-                      </tr>
+                      {properties.length === 0 && (
+                        <tr><td colSpan={calendarDays.length + 1} style={{ padding: 20, color: c.cammello, fontSize: 13 }}>Nessun alloggio attivo.</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
-              )}
 
-              {/* Dettaglio prenotazioni del mese */}
-              {monthBookings.length > 0 && (
-                <div style={{ marginTop: 36 }}>
-                  <p style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, marginBottom: 10 }}>Dettaglio prenotazioni</p>
+                <div style={{ display: "flex", gap: 20, marginTop: 12, flexWrap: "wrap" }}>
+                  {[["#2d6a4f","Confermata"], ["#c9963a","In attesa"], ["#aaa","Blocco iCal"]].map(([col, label]) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 16, height: 10, borderRadius: 3, background: col }} />
+                      <span style={{ fontSize: 12, color: c.cammello }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════
+              TAB: PRENOTAZIONI
+          ══════════════════════════════════════════════════════════ */}
+          {!loading && activeTab === "prenotazioni" && (
+            <div>
+              {sortedBookings.length === 0
+                ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione.</p>
+                : (
+                  <>
+                    {/* MOBILE: card layout ────────────────────────────── */}
+                    <div className="flex flex-col gap-3 md:hidden">
+                      {sortedBookings.map(b => {
+                        const guest = getGuest(b);
+                        const fin = calcFin(b);
+                        const isPast = b.check_out < today;
+                        const badge = channelBadge(b.channel);
+                        return (
+                          <div key={b.id} onClick={() => setSelectedBooking(b)}
+                            style={{ background: "#fff", border: `1px solid ${c.sabbia}`, borderRadius: 12, padding: "14px 16px", cursor: "pointer", opacity: isPast ? 0.55 : 1 }}>
+                            {/* Riga 1: nome ospite + badge canale */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 }}>
+                              <span style={{ fontSize: 16, fontWeight: 600, color: c.tabacco, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                                {guest?.full_name ?? <span style={{ color: c.cammello, fontStyle: "italic" }}>Ospite non identificato</span>}
+                              </span>
+                              <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: badge.bg, color: badge.color, flexShrink: 0 }}>
+                                {fmtCh(b.channel)}
+                              </span>
+                            </div>
+                            {/* Riga 2: date + alloggio */}
+                            <div style={{ fontSize: 13, color: c.cammello, marginBottom: 10 }}>
+                              {fmt(b.check_in)} → {fmt(b.check_out)}
+                              {getPropName(b) && <span style={{ marginLeft: 8, padding: "1px 6px", borderRadius: 4, background: c.sabbia, fontSize: 11, color: c.tabacco }}>{getPropName(b)}</span>}
+                            </div>
+                            {/* Riga 3: lordo + utile */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 20, fontWeight: 500, color: c.tabacco }}>
+                                {b.gross_amount ? `€ ${b.gross_amount}` : <span style={{ fontSize: 14, color: c.sabbia }}>Nessun importo</span>}
+                              </span>
+                              {fin ? (
+                                <span style={{ fontSize: 18, fontWeight: 700, color: fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030" }}>
+                                  {eur(fin.utile_reale)}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* DESKTOP: tabella ────────────────────────────────── */}
+                    <div className="hidden md:block" style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
+                            {["Ospite","Alloggio","Arrivo","Partenza","Notti","Canale","Lordo","Comm. OTA","Netto OTA","Cedolare","Netto Ric.","Pulizie","Utile","Stato","Pagamento","Check-in"].map(h => (
+                              <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedBookings.map((b, i) => {
+                            const guest = getGuest(b);
+                            const isPast = b.check_out < today;
+                            const rowBg = i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)";
+                            const fin = calcFin(b);
+                            return (
+                              <tr key={b.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: rowBg, opacity: isPast ? 0.5 : 1, cursor: "pointer" }} onClick={() => setSelectedBooking(b)}>
+                                <td style={{ padding: "11px 12px" }}>
+                                  {guest?.full_name
+                                    ? <div style={{ fontWeight: 500 }}>{guest.full_name}</div>
+                                    : <div style={{ color: c.cammello, fontStyle: "italic" }}>Ospite non identificato</div>
+                                  }
+                                  {guest?.phone && <div style={{ fontSize: 11, color: c.cammello }}>{guest.phone}</div>}
+                                </td>
+                                <td style={{ padding: "11px 12px" }}>{getPropName(b) ?? <span style={{ color: c.sabbia }}>—</span>}</td>
+                                <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }}>{fmt(b.check_in)}</td>
+                                <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }}>{fmt(b.check_out)}</td>
+                                <td style={{ padding: "11px 12px", color: c.cammello, textAlign: "center" }}>{notti(b.check_in, b.check_out)}</td>
+                                <td style={{ padding: "11px 12px" }}>{fmtCh(b.channel)}</td>
+                                <td style={{ padding: "11px 12px", color: b.gross_amount ? c.tabacco : c.sabbia }}>
+                                  {b.gross_amount ? `€ ${b.gross_amount}` : "—"}
+                                </td>
+                                <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.commissione_ota) : "—"}</td>
+                                <td style={{ padding: "11px 12px", color: fin ? c.tabacco : c.sabbia }}>{fin ? eur(fin.netto_dopo_comm) : "—"}</td>
+                                <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.cedolare) : "—"}</td>
+                                <td style={{ padding: "11px 12px", color: fin ? c.tabacco : c.sabbia }}>{fin ? eur(fin.netto_ricevuto) : "—"}</td>
+                                <td style={{ padding: "11px 12px", color: fin ? "#a03030" : c.sabbia }}>{fin ? eur(fin.costi_pulizie) : "—"}</td>
+                                <td style={{ padding: "11px 12px", fontWeight: 600, color: fin ? (fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{fin ? eur(fin.utile_reale) : "—"}</td>
+                                <td style={{ padding: "11px 12px" }}>
+                                  <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: STATUS_STYLE[b.status]?.bg ?? c.sabbia, color: STATUS_STYLE[b.status]?.color ?? c.tabacco }}>
+                                    {STATUS_LABEL[b.status] ?? b.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: "11px 12px" }} onClick={e => { e.stopPropagation(); setEditPrice({ id: b.id, value: b.total_price?.toString() ?? "" }); }}>
+                                  {editPrice?.id === b.id ? (
+                                    <input
+                                      autoFocus
+                                      style={{ width: 80, padding: "4px 6px", border: `1px solid ${c.cammello}`, borderRadius: 4, fontSize: 13, fontFamily: "inherit" }}
+                                      value={editPrice.value}
+                                      onChange={e => setEditPrice({ id: b.id, value: e.target.value })}
+                                      onBlur={() => savePrice(b.id, editPrice.value)}
+                                      onKeyDown={e => { if (e.key === "Enter") savePrice(b.id, editPrice.value); if (e.key === "Escape") setEditPrice(null); }}
+                                    />
+                                  ) : (
+                                    <span style={{ color: b.total_price ? c.tabacco : c.sabbia }}>
+                                      {b.total_price ? `€${b.total_price}` : "—"}
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }} onClick={e => e.stopPropagation()}>
+                                  {copiedId === b.id
+                                    ? <span style={{ fontSize: 12, color: "#1a4d1a", fontWeight: 600 }}>Copiato!</span>
+                                    : b.guest_id !== null
+                                    ? <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>Completato</span>
+                                    : <button onClick={() => copyLink(b.id)} style={{ padding: "4px 10px", background: c.cammello, color: "#fff", border: "none", borderRadius: 4, fontSize: 12, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>Link</button>
+                                  }
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )
+              }
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════
+              TAB: IMPORT LOG
+          ══════════════════════════════════════════════════════════ */}
+          {activeTab === "import" && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: 0, letterSpacing: "-0.01em" }}>Ultimi 10 import email</h2>
+                <button onClick={fetchImportLogs} style={{ padding: "6px 14px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "none", fontSize: 12, color: c.cammello, fontFamily: "inherit", cursor: "pointer" }}>Aggiorna</button>
+              </div>
+              <div style={{ marginBottom: 32, background: c.sabbia, borderRadius: 6, padding: "20px 24px" }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: c.tabacco, margin: "0 0 4px", letterSpacing: "0.04em", textTransform: "uppercase" }}>Import storico CSV</p>
+                <p style={{ fontSize: 12, color: c.cammello, margin: "0 0 14px" }}>Carica il CSV esportato da Airbnb per aggiornare nome ospite e importo sulle prenotazioni esistenti.</p>
+                <label style={{ display: "inline-block", padding: "9px 18px", background: c.tabacco, color: c.lino, borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: csvImporting ? "default" : "pointer", opacity: csvImporting ? 0.6 : 1, letterSpacing: "0.04em" }}>
+                  {csvImporting ? "Importazione…" : "Scegli file CSV"}
+                  <input type="file" accept=".csv" style={{ display: "none" }} disabled={csvImporting} onChange={handleCsvImport} />
+                </label>
+                {csvResult && (
+                  <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: csvResult.errors.length ? "#fef3cd" : "#d0ead0", color: csvResult.errors.length ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
+                    {(csvResult.created ?? 0) > 0 && <><strong>{csvResult.created} create</strong>, </>}
+                    <strong>{csvResult.updated} aggiornate</strong>{csvResult.skipped > 0 ? `, ${csvResult.skipped} saltate` : ""}.
+                    {csvResult.errors.length > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
+                  </div>
+                )}
+              </div>
+
+              {importLogs.length === 0
+                ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessun import ancora.</p>
+                : (
                   <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                       <thead>
-                        <tr style={{ borderBottom: `1px solid ${c.sabbia}` }}>
-                          {["Ospite","Alloggio","Arrivo","Notti","Canale","Lordo","Comm.","Netto OTA","Ced.","Netto Ric.","Pulizie","Utile"].map(h => (
-                            <th key={h} style={{ padding: "8px 10px", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" }}>{h}</th>
+                        <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
+                          {["Data", "Canale", "Ospite", "Ref.", "Azione", "Errore"].map(h => (
+                            <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {monthBookings.map((b, i) => {
-                          const g   = getGuest(b);
-                          const f   = calcFin(b);
-                          const nn  = Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / 86_400_000);
+                        {importLogs.map((log, i) => {
+                          const actionStyle: Record<string, { bg: string; color: string }> = {
+                            created: { bg: "#d0ead0", color: "#1a4d1a" },
+                            updated: { bg: "#fef3cd", color: "#6b4c00" },
+                            skipped: { bg: "#e8e8e8", color: "#555" },
+                            error:   { bg: "#fad7d7", color: "#7a1a1a" },
+                          };
+                          const style = actionStyle[log.action ?? ""] ?? { bg: c.sabbia, color: c.tabacco };
+                          const dt = log.created_at ? new Date(log.created_at) : null;
+                          const dateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")} ${dt.getHours().toString().padStart(2,"0")}:${dt.getMinutes().toString().padStart(2,"0")}` : "—";
                           return (
-                            <tr key={b.id} onClick={() => setSelectedBooking(b)} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)", cursor: "pointer" }}>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{g?.full_name ?? <span style={{ color: c.cammello, fontStyle: "italic" }}>—</span>}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{getPropName(b) ?? "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right", whiteSpace: "nowrap" }}>{fmt(b.check_in)}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{nn}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{fmtCh(b.channel)}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{b.gross_amount ? `€ ${b.gross_amount}` : "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.commissione_ota) : "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_dopo_comm) : "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.cedolare) : "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_ricevuto) : "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.costi_pulizie) : "—"}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: f ? (f.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{f ? eur(f.utile_reale) : "—"}</td>
+                            <tr key={log.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)" }}>
+                              <td style={{ padding: "10px 12px", whiteSpace: "nowrap", color: c.cammello, fontSize: 12 }}>{dateStr}</td>
+                              <td style={{ padding: "10px 12px", textTransform: "capitalize" }}>{log.channel ?? "—"}</td>
+                              <td style={{ padding: "10px 12px" }}>{log.guest_name ?? "—"}</td>
+                              <td style={{ padding: "10px 12px", fontFamily: "monospace", fontSize: 12, color: c.cammello }}>{log.booking_ref ?? "—"}</td>
+                              <td style={{ padding: "10px 12px" }}>
+                                <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: style.bg, color: style.color }}>{log.action ?? "—"}</span>
+                              </td>
+                              <td style={{ padding: "10px 12px", fontSize: 12, color: "#7a1a1a", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={log.error_message ?? ""}>{log.error_message ?? ""}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
                   </div>
-                </div>
-              )}
+                )
+              }
             </div>
-          );
-        })()}
-
-        {/* ════════════════════════════════════════════════════════════
-            FORM AGGIUNGI (collassabile)
-        ════════════════════════════════════════════════════════════ */}
-        <div style={{ marginTop: 48 }}>
-          <button onClick={() => setFormOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
-            <span style={{ fontSize: 18 }}>{formOpen ? "−" : "+"}</span>
-            Aggiungi prenotazione manuale
-          </button>
-
-          {formOpen && (
-            <form onSubmit={handleSubmit} style={{ marginTop: 16, background: c.sabbia, borderRadius: 6, padding: "28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 24px" }}>
-
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={lbl}>Alloggio</label>
-                <select name="property_id" value={form.property_id} onChange={e => {
-                    const pid = e.target.value;
-                    const prop = properties.find(p => p.id === pid);
-                    setForm(f => ({ ...f, property_id: pid, channel: prop?.is_private ? "No Tax" : f.channel }));
-                  }} style={inp} required>
-                  {properties.length === 0 && <option value="">Caricamento…</option>}
-                  {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label style={lbl}>Nome ospite</label>
-                <input value={form.nome_ospite} onChange={e => setForm(f => ({ ...f, nome_ospite: e.target.value }))} required placeholder="Mario Rossi" style={inp} />
-              </div>
-              <div>
-                <label style={lbl}>Telefono</label>
-                <input value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="+39 333 0000000" style={inp} />
-              </div>
-
-              <div>
-                <label style={lbl}>Arrivo</label>
-                <input type="date" value={form.check_in} onChange={e => setForm(f => ({ ...f, check_in: e.target.value }))} required style={inp} />
-              </div>
-              <div>
-                <label style={lbl}>Partenza</label>
-                <input type="date" value={form.check_out} onChange={e => setForm(f => ({ ...f, check_out: e.target.value }))} required style={inp} />
-              </div>
-
-              <div>
-                <label style={lbl}>Ospiti</label>
-                <select value={form.num_guests} onChange={e => setForm(f => ({ ...f, num_guests: e.target.value }))} style={inp}>
-                  {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={lbl}>Canale</label>
-                <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value as typeof form.channel }))} style={inp}>
-                  {CHANNELS.map(ch => <option key={ch} value={ch}>{ch}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label style={lbl}>Stato</label>
-                <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as typeof form.status }))} style={inp}>
-                  {STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={lbl}>Pagamento (€)</label>
-                <input type="number" value={form.total_price} onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))} placeholder="0" style={inp} />
-              </div>
-
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={lbl}>Note</label>
-                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Check-in tardivo…" style={{ ...inp, resize: "vertical" }} />
-              </div>
-
-              {formError && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13 }}>Errore: {formError}</div>}
-              {saved     && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#d0ead0", borderRadius: 3, color: "#1a4d1a", fontSize: 13 }}>Prenotazione salvata.</div>}
-
-              <div style={{ gridColumn: "1 / -1" }}>
-                <button type="submit" disabled={saving} style={{ padding: "12px 32px", background: c.tabacco, color: c.lino, border: "none", borderRadius: 3, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
-                  {saving ? "Salvataggio…" : "Aggiungi"}
-                </button>
-              </div>
-            </form>
           )}
-        </div>
-          {/* Blocca date */}
-          <div style={{ marginTop: 24 }}>
+
+          {/* ══════════════════════════════════════════════════════════
+              TAB: REPORT
+          ══════════════════════════════════════════════════════════ */}
+          {activeTab === "report" && (() => {
+            const { year, month } = reportMonth;
+
+            const monthBookings = bookings.filter(b =>
+              b.booking_type !== "block" &&
+              b.check_in.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)
+            );
+
+            const byProp = new Map<string, { name: string; rows: Booking[] }>();
+            for (const b of monthBookings) {
+              const pid  = b.property_id ?? "__none__";
+              const name = getPropName(b) ?? "Senza alloggio";
+              if (!byProp.has(pid)) byProp.set(pid, { name, rows: [] });
+              byProp.get(pid)!.rows.push(b);
+            }
+
+            type FinTotals = { lordo: number; commissioni: number; netto_ota: number; cedolare: number; netto_ricevuto: number; pulizie: number; utile: number; count: number };
+            function sumFin(rows: Booking[]): FinTotals {
+              const t: FinTotals = { lordo: 0, commissioni: 0, netto_ota: 0, cedolare: 0, netto_ricevuto: 0, pulizie: 0, utile: 0, count: 0 };
+              for (const b of rows) {
+                const f = calcFin(b);
+                if (!f) continue;
+                t.count++;
+                t.lordo         += b.gross_amount ?? 0;
+                t.commissioni   += f.commissione_ota;
+                t.netto_ota     += f.netto_dopo_comm;
+                t.cedolare      += f.cedolare;
+                t.netto_ricevuto+= f.netto_ricevuto;
+                t.pulizie       += f.costi_pulizie;
+                t.utile         += f.utile_reale;
+              }
+              return t;
+            }
+            function totRow(t: FinTotals) {
+              return [t.lordo, t.commissioni, t.netto_ota, t.cedolare, t.netto_ricevuto, t.pulizie, t.utile];
+            }
+
+            const propEntries = [...byProp.entries()];
+            const totali = sumFin(monthBookings);
+            const COL_LABELS = ["Lordo", "Comm. OTA", "Netto OTA", "Cedolare", "Netto Ric.", "Pulizie", "Utile"];
+            const thStyle: React.CSSProperties = { padding: "9px 12px", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" };
+            const tdNum: React.CSSProperties   = { padding: "9px 12px", textAlign: "right", fontSize: 13 };
+
+            return (
+              <div>
+                {/* MOBILE ─────────────────────────────────────────────── */}
+                <div className="md:hidden">
+                  {/* Navigazione mese */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                    <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 0 ? { year: y - 1, month: 11 } : { year: y, month: m - 1 })}
+                      style={{ height: 44, padding: "0 16px", background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
+                    <span style={{ fontSize: 15, fontWeight: 600, flex: 1, textAlign: "center" }}>
+                      {MONTH_IT[month]} {year}
+                    </span>
+                    <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 })}
+                      style={{ height: 44, padding: "0 16px", background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
+                  </div>
+
+                  {monthBookings.length === 0 ? (
+                    <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione in {MONTH_IT[month]} {year}.</p>
+                  ) : (
+                    <>
+                      {/* Totali grandi */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                        <div style={{ background: c.tabacco, borderRadius: 10, padding: "16px 18px" }}>
+                          <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.sabbia, margin: "0 0 6px" }}>Lordo mese</p>
+                          <p style={{ fontSize: 22, fontWeight: 700, color: c.lino, margin: 0, lineHeight: 1 }}>{eur(totali.lordo)}</p>
+                        </div>
+                        <div style={{ background: totali.utile >= 0 ? "#1a4d1a" : "#7a1a1a", borderRadius: 10, padding: "16px 18px" }}>
+                          <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", margin: "0 0 6px" }}>Utile reale</p>
+                          <p style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1 }}>{eur(totali.utile)}</p>
+                        </div>
+                      </div>
+                      {/* Stat secondarie */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
+                        {[
+                          ["Prenotazioni", String(monthBookings.length)],
+                          ["Cedolare",     eur(totali.cedolare)],
+                          ["Pulizie",      eur(totali.pulizie)],
+                        ].map(([label, val]) => (
+                          <div key={label} style={{ background: c.sabbia, borderRadius: 8, padding: "10px 8px", textAlign: "center" }}>
+                            <p style={{ fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, margin: "0 0 4px" }}>{label}</p>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: c.tabacco, margin: 0 }}>{val}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Lista prenotazioni compatta */}
+                      <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, margin: "0 0 10px" }}>Dettaglio</p>
+                      <div className="flex flex-col gap-2">
+                        {monthBookings.map(b => {
+                          const g = getGuest(b);
+                          const f = calcFin(b);
+                          const badge = channelBadge(b.channel);
+                          return (
+                            <div key={b.id} onClick={() => setSelectedBooking(b)}
+                              style={{ background: "#fff", border: `1px solid ${c.sabbia}`, borderRadius: 10, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, minHeight: 56 }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: c.tabacco, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {g?.full_name ?? "—"}
+                                </div>
+                                <div style={{ fontSize: 11, color: c.cammello }}>{fmt(b.check_in)} · {notti(b.check_in, b.check_out)}</div>
+                              </div>
+                              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: c.tabacco }}>{b.gross_amount ? `€ ${b.gross_amount}` : "—"}</div>
+                                {f && <div style={{ fontSize: 12, fontWeight: 700, color: f.utile_reale >= 0 ? "#1a4d1a" : "#a03030" }}>{eur(f.utile_reale)}</div>}
+                              </div>
+                              <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 20, background: badge.bg, color: badge.color, flexShrink: 0 }}>
+                                {fmtCh(b.channel)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* DESKTOP ─────────────────────────────────────────────── */}
+                <div className="hidden md:block">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 0 ? { year: y - 1, month: 11 } : { year: y, month: m - 1 })}
+                        style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>‹</button>
+                      <span style={{ fontSize: 15, fontWeight: 600, minWidth: 160, textAlign: "center" }}>
+                        {MONTH_IT[month]} {year}
+                      </span>
+                      <button onClick={() => setReportMonth(({ year: y, month: m }) => m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 })}
+                        style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
+                    </div>
+                    <span style={{ fontSize: 12, color: c.cammello }}>{monthBookings.length} prenotazioni · {totali.count} con importo lordo</span>
+                  </div>
+
+                  {monthBookings.length === 0 ? (
+                    <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione in {MONTH_IT[month]} {year}.</p>
+                  ) : (
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ background: c.sabbia }}>
+                            <th style={{ ...thStyle, textAlign: "left", minWidth: 140 }}>Alloggio</th>
+                            <th style={{ ...thStyle, textAlign: "center" }}>Pren.</th>
+                            {COL_LABELS.map(h => <th key={h} style={thStyle}>{h}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {propEntries.map(([pid, { name, rows }], pi) => {
+                            const t = sumFin(rows);
+                            const vals = totRow(t);
+                            return (
+                              <tr key={pid} style={{ borderBottom: `1px solid ${c.sabbia}`, background: pi % 2 === 0 ? "#fff" : "rgba(212,201,181,0.15)" }}>
+                                <td style={{ padding: "10px 12px", fontWeight: 600, color: c.tabacco }}>{name}</td>
+                                <td style={{ ...tdNum, textAlign: "center", color: c.cammello }}>{rows.length}</td>
+                                {vals.map((v, vi) => (
+                                  <td key={vi} style={{ ...tdNum, fontWeight: vi === vals.length - 1 ? 700 : 400, color: vi === vals.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
+                                    {eur(v)}
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                          <tr style={{ borderTop: `2px solid ${c.tabacco}`, background: "rgba(44,36,22,0.06)" }}>
+                            <td style={{ padding: "11px 12px", fontWeight: 700, fontSize: 13, color: c.tabacco }}>Totale generale</td>
+                            <td style={{ ...tdNum, textAlign: "center", fontWeight: 700, color: c.tabacco }}>{monthBookings.length}</td>
+                            {totRow(totali).map((v, vi) => (
+                              <td key={vi} style={{ ...tdNum, fontWeight: 700, color: vi === COL_LABELS.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
+                                {eur(v)}
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {monthBookings.length > 0 && (
+                    <div style={{ marginTop: 36 }}>
+                      <p style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, marginBottom: 10 }}>Dettaglio prenotazioni</p>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: `1px solid ${c.sabbia}` }}>
+                              {["Ospite","Alloggio","Arrivo","Notti","Canale","Lordo","Comm.","Netto OTA","Ced.","Netto Ric.","Pulizie","Utile"].map(h => (
+                                <th key={h} style={{ padding: "8px 10px", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, textAlign: "right", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {monthBookings.map((b, i) => {
+                              const g  = getGuest(b);
+                              const f  = calcFin(b);
+                              const nn = Math.round((new Date(b.check_out).getTime() - new Date(b.check_in).getTime()) / 86_400_000);
+                              return (
+                                <tr key={b.id} onClick={() => setSelectedBooking(b)} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)", cursor: "pointer" }}>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{g?.full_name ?? <span style={{ color: c.cammello, fontStyle: "italic" }}>—</span>}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{getPropName(b) ?? "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right", whiteSpace: "nowrap" }}>{fmt(b.check_in)}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{nn}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{fmtCh(b.channel)}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{b.gross_amount ? `€ ${b.gross_amount}` : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.commissione_ota) : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_dopo_comm) : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.cedolare) : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_ricevuto) : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.costi_pulizie) : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: f ? (f.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{f ? eur(f.utile_reale) : "—"}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ══════════════════════════════════════════════════════════
+              FORM AGGIUNGI PRENOTAZIONE
+          ══════════════════════════════════════════════════════════ */}
+          <div style={{ marginTop: 48 }}>
+            <button onClick={() => setFormOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
+              <span style={{ fontSize: 18 }}>{formOpen ? "−" : "+"}</span>
+              Aggiungi prenotazione manuale
+            </button>
+
+            {formOpen && (
+              <form onSubmit={handleSubmit} style={{ marginTop: 16, background: c.sabbia, borderRadius: 6, padding: "28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 24px" }}>
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={lbl}>Alloggio</label>
+                  <select name="property_id" value={form.property_id} onChange={e => {
+                      const pid = e.target.value;
+                      const prop = properties.find(p => p.id === pid);
+                      setForm(f => ({ ...f, property_id: pid, channel: prop?.is_private ? "No Tax" : f.channel }));
+                    }} style={inp} required>
+                    {properties.length === 0 && <option value="">Caricamento…</option>}
+                    {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={lbl}>Nome ospite</label>
+                  <input value={form.nome_ospite} onChange={e => setForm(f => ({ ...f, nome_ospite: e.target.value }))} required placeholder="Mario Rossi" style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Telefono</label>
+                  <input value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="+39 333 0000000" style={inp} />
+                </div>
+
+                <div>
+                  <label style={lbl}>Arrivo</label>
+                  <input type="date" value={form.check_in} onChange={e => setForm(f => ({ ...f, check_in: e.target.value }))} required style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Partenza</label>
+                  <input type="date" value={form.check_out} onChange={e => setForm(f => ({ ...f, check_out: e.target.value }))} required style={inp} />
+                </div>
+
+                <div>
+                  <label style={lbl}>Ospiti</label>
+                  <select value={form.num_guests} onChange={e => setForm(f => ({ ...f, num_guests: e.target.value }))} style={inp}>
+                    {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Canale</label>
+                  <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value as typeof form.channel }))} style={inp}>
+                    {CHANNELS.map(ch => <option key={ch} value={ch}>{ch}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={lbl}>Stato</label>
+                  <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as typeof form.status }))} style={inp}>
+                    {STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Pagamento (€)</label>
+                  <input type="number" value={form.total_price} onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))} placeholder="0" style={inp} />
+                </div>
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={lbl}>Note</label>
+                  <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Check-in tardivo…" style={{ ...inp, resize: "vertical" }} />
+                </div>
+
+                {formError && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13 }}>Errore: {formError}</div>}
+                {saved     && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#d0ead0", borderRadius: 3, color: "#1a4d1a", fontSize: 13 }}>Prenotazione salvata.</div>}
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <button type="submit" disabled={saving} style={{ padding: "12px 32px", background: c.tabacco, color: c.lino, border: "none", borderRadius: 3, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
+                    {saving ? "Salvataggio…" : "Aggiungi"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* ── BLOCCA DATE ── */}
+          <div style={{ marginTop: 24, marginBottom: 16 }}>
             <button onClick={() => setBlockOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
               <span style={{ fontSize: 18 }}>{blockOpen ? "−" : "+"}</span>
               Blocca date
@@ -878,11 +1083,41 @@ export default function AdminPage() {
               </form>
             )}
           </div>
-        </main>
+        </div>
+      </main>
 
-      {/* ════════════════════════════════════════════════════════════
-          MODALE DETTAGLIO
-      ════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════
+          TAB BAR MOBILE — fissa in basso (nascosta su desktop)
+      ══════════════════════════════════════════════════════════════ */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden"
+        style={{ background: c.lino, borderTop: `1px solid ${c.sabbia}`, zIndex: 50 }}>
+        <div style={{ display: "flex" }}>
+          {([
+            { tab: "calendario",   label: "Calendario",   icon: "▦" },
+            { tab: "prenotazioni", label: "Pren.",        icon: "≡" },
+            { tab: "report",       label: "Report",       icon: "◎" },
+          ] as { tab: "calendario" | "prenotazioni" | "report"; label: string; icon: string }[]).map(({ tab, label, icon }) => (
+            <button key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                padding: "10px 0 14px", gap: 3,
+                background: "none", border: "none", cursor: "pointer", fontFamily: "inherit",
+                color: activeTab === tab ? c.tabacco : c.cammello,
+                borderTop: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`,
+                minHeight: 56,
+              }}>
+              <span style={{ fontSize: 22, lineHeight: 1 }}>{icon}</span>
+              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* ══════════════════════════════════════════════════════════════
+          BOTTOM SHEET — dettaglio prenotazione
+      ══════════════════════════════════════════════════════════════ */}
       {selectedBooking && (() => {
         const b = selectedBooking;
         const guest = getGuest(b);
@@ -896,14 +1131,14 @@ export default function AdminPage() {
               {/* Handle */}
               <div style={{ width: 40, height: 4, background: c.sabbia, borderRadius: 2, margin: "0 auto 20px" }} />
 
-              {/* Guest */}
+              {/* Ospite */}
               <p style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: c.cammello, margin: "0 0 4px" }}>Ospite</p>
               <p style={{ fontSize: 20, fontWeight: 600, color: c.tabacco, margin: "0 0 4px" }}>{guest?.full_name ?? "—"}</p>
               {guest?.phone && <p style={{ fontSize: 14, color: c.cammello, margin: "0 0 2px" }}>{guest.phone}</p>}
               {guest?.email && <p style={{ fontSize: 14, color: c.cammello, margin: "0 0 16px" }}>{guest.email}</p>}
               {!guest?.phone && !guest?.email && <div style={{ marginBottom: 16 }} />}
 
-              {/* Details grid */}
+              {/* Dettagli */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 20px", marginBottom: 20 }}>
                 {[
                   ["Alloggio",  getPropName(b) ?? "—"],
@@ -949,7 +1184,7 @@ export default function AdminPage() {
                 )}
               </div>
 
-              {/* Breakdown finanziario */}
+              {/* Riepilogo economico */}
               {fin && (
                 <div style={{ marginBottom: 20 }}>
                   <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, margin: "0 0 8px" }}>Riepilogo economico</p>
@@ -959,7 +1194,7 @@ export default function AdminPage() {
                         ["Lordo OTA",       eur(b.gross_amount),       false],
                         [`Comm. ${fmtCh(b.channel)} (${((OTA_COMMISSION[b.channel.toLowerCase()] ?? 0) * 100).toFixed(2)}%)`, `− ${eur(fin.commissione_ota)}`, true],
                         ["Netto OTA",       eur(fin.netto_dopo_comm),  false],
-                        [`Cedolare ${(fin.cedRate * 100).toFixed(0)}%`, `− ${eur(fin.cedolare)}`,  true],
+                        [`Cedolare ${(fin.cedRate * 100).toFixed(0)}%`, `− ${eur(fin.cedolare)}`, true],
                         ["Netto ricevuto",  eur(fin.netto_ricevuto),   false],
                         ["Pulizie",         `− ${eur(fin.costi_pulizie)}`, true],
                       ] as [string, string, boolean][]).map(([label, value, isDeduction]) => (
@@ -985,28 +1220,28 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Actions */}
+              {/* Azioni */}
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
                 {b.guest_id === null && (
-                  <button onClick={() => copyLink(b.id)} style={{ padding: "12px", background: c.tabacco, color: c.lino, border: "none", borderRadius: 8, fontSize: 14, fontFamily: "inherit", fontWeight: 500, cursor: "pointer" }}>
+                  <button onClick={() => copyLink(b.id)} style={{ padding: "14px", background: c.tabacco, color: c.lino, border: "none", borderRadius: 8, fontSize: 14, fontFamily: "inherit", fontWeight: 500, cursor: "pointer" }}>
                     {copiedId === b.id ? "Copiato!" : "Copia link check-in"}
                   </button>
                 )}
                 {b.guest_id !== null && (
-                  <div style={{ padding: "10px 14px", background: "#d0ead0", borderRadius: 8, fontSize: 13, color: "#1a4d1a", textAlign: "center", fontWeight: 500 }}>
+                  <div style={{ padding: "12px 14px", background: "#d0ead0", borderRadius: 8, fontSize: 13, color: "#1a4d1a", textAlign: "center", fontWeight: 500 }}>
                     Check-in completato
                   </div>
                 )}
 
                 {!deleteConfirm
-                  ? <button onClick={() => setDeleteConfirm(true)} style={{ padding: "12px", background: "none", color: "#a03030", border: "1px solid #f0c0c0", borderRadius: 8, fontSize: 14, fontFamily: "inherit", cursor: "pointer" }}>
+                  ? <button onClick={() => setDeleteConfirm(true)} style={{ padding: "14px", background: "none", color: "#a03030", border: "1px solid #f0c0c0", borderRadius: 8, fontSize: 14, fontFamily: "inherit", cursor: "pointer" }}>
                       Elimina prenotazione
                     </button>
                   : <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={handleDelete} style={{ flex: 1, padding: "12px", background: "#a03030", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>
+                      <button onClick={handleDelete} style={{ flex: 1, padding: "14px", background: "#a03030", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>
                         Conferma eliminazione
                       </button>
-                      <button onClick={() => setDeleteConfirm(false)} style={{ flex: 1, padding: "12px", background: "none", color: c.tabacco, border: `1px solid ${c.sabbia}`, borderRadius: 8, fontSize: 14, fontFamily: "inherit", cursor: "pointer" }}>
+                      <button onClick={() => setDeleteConfirm(false)} style={{ flex: 1, padding: "14px", background: "none", color: c.tabacco, border: `1px solid ${c.sabbia}`, borderRadius: 8, fontSize: 14, fontFamily: "inherit", cursor: "pointer" }}>
                         Annulla
                       </button>
                     </div>
