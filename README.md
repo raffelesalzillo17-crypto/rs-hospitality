@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RS Hospitality
 
-## Getting Started
+Gestionale interno per affitti brevi. Sviluppato da Raffaele Salzillo, Marcianise (CE).
 
-First, run the development server:
+- Sito: [rshospitality.it](https://rshospitality.it)
+- Deploy: [rs-hospitality.vercel.app](https://rs-hospitality.vercel.app)
+- DB: Supabase (`mjrdjkrqhmxvlmfpbfqf.supabase.co`)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Stack
+
+- **Next.js 16** (App Router) + **TypeScript strict**
+- **Tailwind CSS 4**
+- **Supabase** (PostgreSQL + Auth)
+- **Vercel** (deploy automatico da GitHub)
+- **Cheerio** + **pdf-parse** (parsing email/PDF per import prenotazioni)
+
+---
+
+## Alloggi attivi
+
+| Nome | Indirizzo | Visibile sul sito |
+|------|-----------|-------------------|
+| Il Tulipano | Via Clanio 60, Marcianise | Sì |
+| Stanza Rosa | Via Clanio 60, Marcianise | No (`is_private = true`) |
+
+---
+
+## Variabili d'ambiente
+
+Crea un file `.env.local` nella root con:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://mjrdjkrqhmxvlmfpbfqf.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
+SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+EMAIL_IMPORT_SECRET=<secret_per_make_com>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Avvio in locale
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Apri [http://localhost:3000](http://localhost:3000).
 
-To learn more about Next.js, take a look at the following resources:
+Admin disponibile su [http://localhost:3000/admin](http://localhost:3000/admin) (richiede credenziali Supabase Auth).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Struttura principale
 
-## Deploy on Vercel
+```
+app/
+  page.tsx                    # Homepage pubblica
+  admin/page.tsx              # Dashboard privata (auth)
+  admin/login/page.tsx        # Login
+  alloggi/il-tulipano/        # Pagina pubblica alloggio
+  checkin/[id]/               # Mini-app check-in ospiti
+  api/email-import/           # Import automatico da Make.com
+  api/sync-calendar/          # Sync iCal Airbnb/Booking
+  api/import-csv/             # Import CSV manuale
+  api/calendar/               # Feed iCal pubblico (usato da pagina Il Tulipano)
+lib/
+  constants.ts                # Commissioni OTA, cedolare, costanti
+  types.ts                    # TypeScript types condivisi
+  date-utils.ts               # Parser date e importi
+  supabase*.ts                # Client Supabase (browser, server, SSR)
+supabase/migrations/          # Schema DB e migrazioni
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Migrazioni DB
+
+Le migrazioni si trovano in `supabase/migrations/` e vengono eseguite tramite MCP Supabase configurato in `.mcp.json`.

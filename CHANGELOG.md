@@ -4,6 +4,24 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-30 (aggiornamento 33 — pulizia progetto)
+
+### Eliminati
+- `public/next.svg`, `vercel.svg`, `file.svg`, `globe.svg`, `window.svg` — boilerplate Next.js inutilizzati
+- `supabase/.temp/` — cache CLI rigenerata automaticamente
+- `run_migration.ps1` — sostituito dal MCP Supabase
+- `SESSIONE.md` — note di sessione obsolete
+- `app/proprietari/` — pagina non collegata e non raggiungibile
+- `app/templates/whatsapp.ts` — file non importato da nessuna parte
+
+### Modificati
+- `README.md` — riscritto con contesto RS Hospitality (stack, alloggi, env vars, struttura, avvio locale)
+
+### Nota
+- `app/api/calendar/route.ts` — mantenuto: usato da `alloggi/il-tulipano/page.tsx`
+
+---
+
 ## [Unreleased] — 2026-03-30 (aggiornamento 32 — CLAUDE.md e agenti AI)
 
 ### `CLAUDE.md` (nuovo)
