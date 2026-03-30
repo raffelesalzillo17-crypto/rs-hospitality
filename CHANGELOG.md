@@ -4,6 +4,21 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-30 (aggiornamento 32 — CLAUDE.md e agenti AI)
+
+### `CLAUDE.md` (nuovo)
+- Contesto progetto completo caricato automaticamente ad ogni sessione Claude Code
+- Stack, palette, alloggi, logica finanziaria, struttura URL, regole di sviluppo
+
+### `.claude/agents/` (nuovi)
+- `virgil.md` — agente frontend e design
+- `atlas.md` — agente database e API
+- `hermes.md` — agente comunicazioni
+- `lex.md` — agente compliance e fiscale
+- `aria.md` — agente automazioni
+
+---
+
 ## [Unreleased] — 2026-03-30 (aggiornamento 31 — Stanza Rosa come seconda property)
 
 ### `supabase/migrations/20260330_stanza_rosa.sql`
