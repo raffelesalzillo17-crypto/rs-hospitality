@@ -4,6 +4,25 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-30 (aggiornamento 31 — Stanza Rosa come seconda property)
+
+### `supabase/migrations/20260330_stanza_rosa.sql`
+- Aggiunge colonna `is_private boolean DEFAULT false` alla tabella `properties`
+- Inserisce **Stanza Rosa** con `is_private = true`
+
+### `lib/types.ts`
+- `Property`: aggiunto campo opzionale `is_private?: boolean`
+
+### `app/admin/page.tsx`
+- Fetch properties: aggiunto `is_private` alla select query
+- Form aggiunta prenotazione: quando si seleziona un alloggio con `is_private = true`, il canale si auto-imposta a **No Tax** (cedolare 0%, nessuna commissione OTA)
+- Calendario e Report già multi-property: mostrano Il Tulipano e Stanza Rosa come righe separate
+
+### `app/api/calendar/route.ts`
+- Aggiunto filtro `.eq('is_private', false)`: le property private (Stanza Rosa) sono escluse dal calendario pubblico
+
+---
+
 ## [Unreleased] — 2026-03-25 (aggiornamento 30 — Canale No Tax + cedolare per canale)
 
 ### `lib/constants.ts`

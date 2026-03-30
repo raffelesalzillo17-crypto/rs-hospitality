@@ -11,6 +11,7 @@ export type Guest = {
 export type Property = {
   id: string;
   name: string;
+  is_private?: boolean;
 };
 
 export type Booking = {

@@ -160,11 +160,16 @@ export default function AdminPage() {
   useEffect(() => {
     fetchBookings();
     fetchImportLogs();
-    supabase.from("properties").select("id, name").eq("active", true).order("name")
+    supabase.from("properties").select("id, name, is_private").eq("active", true).order("name")
       .then(({ data }) => {
         if (data?.length) {
           setProperties(data);
-          setForm(f => ({ ...f, property_id: data[0].id }));
+          const first = data[0];
+          setForm(f => ({
+            ...f,
+            property_id: first.id,
+            channel: first.is_private ? "No Tax" : f.channel,
+          }));
         }
       });
   }, [fetchBookings, fetchImportLogs]);
@@ -783,7 +788,11 @@ export default function AdminPage() {
 
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={lbl}>Alloggio</label>
-                <select name="property_id" value={form.property_id} onChange={e => setForm(f => ({ ...f, property_id: e.target.value }))} style={inp} required>
+                <select name="property_id" value={form.property_id} onChange={e => {
+                    const pid = e.target.value;
+                    const prop = properties.find(p => p.id === pid);
+                    setForm(f => ({ ...f, property_id: pid, channel: prop?.is_private ? "No Tax" : f.channel }));
+                  }} style={inp} required>
                   {properties.length === 0 && <option value="">Caricamento…</option>}
                   {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>

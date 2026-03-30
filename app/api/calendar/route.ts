@@ -36,7 +36,8 @@ export async function GET(request: Request) {
     let query = supabase
       .from('properties')
       .select('id, name, ical_airbnb, ical_booking')
-      .eq('active', true);
+      .eq('active', true)
+      .eq('is_private', false);
 
     if (slug) query = query.eq('name', slug);
 
