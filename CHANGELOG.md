@@ -4,6 +4,19 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-31 (aggiornamento 36 — cedolare lordo, form in cima, blocca date, copia link mobile)
+
+### Modificati
+- `app/admin/page.tsx`:
+  - **Cedolare sul lordo**: calcolo allineato al Google Sheet (`cedolare = lordo × aliquota` invece di `netto_dopo_comm × aliquota`)
+  - **Form prenotazione + Blocca date**: spostati in cima alla tab Prenotazioni (prima erano in fondo alla pagina)
+  - **Copia link check-in**: bottone aggiunto nel card mobile (riga date), non più solo in tabella desktop
+  - **Scroll lock**: `document.body.style.overflow = "hidden"` quando il modale dettaglio prenotazione è aperto
+  - **Tabella desktop**: semplificato bottone "Copia link" (rimosso stato "Completato" — il link è sempre disponibile)
+- `middleware.ts`: auth commentata — `/admin` accessibile senza login (intenzionale)
+
+---
+
 ## [Unreleased] — 2026-03-30 (aggiornamento 35 — fix /admin: 4 bug)
 
 ### Fix
