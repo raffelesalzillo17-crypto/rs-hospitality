@@ -64,9 +64,26 @@ function barLabel(b: Booking): string {
 
 // ── Logica finanziaria ────────────────────────────────────────────────────────
 function calcFin(b: Booking) {
+  const ch = b.channel.toLowerCase();
+
+  // Canale No Tax: escluso da logica fiscale, netto = total_price
+  if (ch === "no tax") {
+    const tp = b.total_price;
+    if (!tp) return null;
+    return {
+      commissione_ota: 0,
+      netto_dopo_comm: tp,
+      cedolare:        0,
+      cedRate:         0,
+      netto_ricevuto:  tp,
+      costi_pulizie:   COSTI_PULIZIE,
+      utile_reale:     tp - COSTI_PULIZIE,
+      is_no_tax:       true,
+    };
+  }
+
   const g = b.gross_amount;
   if (!g) return null;
-  const ch              = b.channel.toLowerCase();
   const rate            = OTA_COMMISSION[ch] ?? 0;
   const cedRate         = CEDOLARE_BY_CHANNEL[ch] ?? CEDOLARE_RATE;
   const commissione_ota = g * rate;
@@ -74,7 +91,7 @@ function calcFin(b: Booking) {
   const cedolare        = g * cedRate;           // cedolare sul lordo (Google Sheet)
   const netto_ricevuto  = netto_dopo_comm - cedolare;
   const utile_reale     = netto_ricevuto - COSTI_PULIZIE;
-  return { commissione_ota, netto_dopo_comm, cedolare, cedRate, netto_ricevuto, costi_pulizie: COSTI_PULIZIE, utile_reale };
+  return { commissione_ota, netto_dopo_comm, cedolare, cedRate, netto_ricevuto, costi_pulizie: COSTI_PULIZIE, utile_reale, is_no_tax: false };
 }
 function eur(n: number | null | undefined) {
   if (n == null) return "—";
@@ -857,7 +874,8 @@ export default function AdminPage() {
                 const f = calcFin(b);
                 if (!f) continue;
                 t.count++;
-                t.lordo         += b.gross_amount ?? 0;
+                // No Tax escluse dal lordo fiscale, incluse nell'utile reale
+                if (!f.is_no_tax) t.lordo += b.gross_amount ?? 0;
                 t.commissioni   += f.commissione_ota;
                 t.netto_ota     += f.netto_dopo_comm;
                 t.cedolare      += f.cedolare;

@@ -4,6 +4,16 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-31 (aggiornamento 38 — No Tax esclusa dal lordo fiscale nel Report)
+
+### Modificati
+- `app/admin/page.tsx`:
+  - **`calcFin`**: branch speciale per canale "No Tax" — `commissione = 0`, `cedolare = 0`, `netto_ricevuto = total_price`, `utile = total_price − €20 pulizie`; usa `total_price` (non `gross_amount`) come base di calcolo
+  - **`sumFin`**: il totale `lordo` non accumula le prenotazioni No Tax (`is_no_tax: true`); l'utile reale le include normalmente
+  - Verifica Marzo: lordo fiscale atteso €1.039 (senza No Tax), utile reale totale €558.43 (con No Tax)
+
+---
+
 ## [Unreleased] — 2026-03-31 (aggiornamento 37 — 4 fix UX/design /admin)
 
 ### Fix
