@@ -151,9 +151,6 @@ export default function AdminPage() {
 
   const [importLogs, setImportLogs] = useState<ImportLog[]>([]);
 
-  const [syncing,    setSyncing]    = useState(false);
-  const [syncResult, setSyncResult] = useState<{ sincronizzati: number; skippati: number; errori: string[] } | null>(null);
-
   const [formOpen,   setFormOpen]   = useState(false);
   const [form,       setForm]       = useState(emptyForm);
   const [saving,     setSaving]     = useState(false);
@@ -227,19 +224,6 @@ export default function AdminPage() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [selectedBooking]);
-
-  // ── Sync ──────────────────────────────────────────────────────────────────
-  async function handleSync() {
-    setSyncing(true); setSyncResult(null);
-    try {
-      const res = await fetch("/api/sync-calendar");
-      setSyncResult(await res.json());
-      await fetchBookings();
-      await fetchImportLogs();
-    } catch (e) {
-      setSyncResult({ sincronizzati: 0, skippati: 0, errori: [(e as Error).message] });
-    } finally { setSyncing(false); }
-  }
 
   // ── Form submit ───────────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
@@ -394,10 +378,6 @@ export default function AdminPage() {
           <h1 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: c.tabacco, letterSpacing: "-0.01em" }}>RS Central</h1>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <button onClick={handleSync} disabled={syncing}
-            style={{ padding: "0 12px", height: 34, border: `1px solid ${c.tabacco}`, borderRadius: 3, background: "transparent", color: c.tabacco, fontSize: 12, cursor: syncing ? "default" : "pointer", opacity: syncing ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500, letterSpacing: "0.04em" }}>
-            {syncing ? "..." : "⟳ Sync"}
-          </button>
           <button onClick={fetchBookings}
             style={{ padding: "0 10px", height: 34, border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
             ↻
@@ -410,13 +390,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* ── SYNC BANNER ── */}
-      {syncResult && (
-        <div style={{ margin: "8px 16px", padding: "10px 16px", borderRadius: 3, fontSize: 13, background: syncResult.errori.length ? "#fef3cd" : "#d0ead0", color: syncResult.errori.length ? "#6b4c00" : "#1a4d1a", borderLeft: `4px solid ${syncResult.errori.length ? "#e6a817" : "#2e7d32"}` }}>
-          <strong>Sync:</strong> {syncResult.sincronizzati} importate, {syncResult.skippati} già presenti.
-          {syncResult.errori.length > 0 && <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>{syncResult.errori.map((e, i) => <li key={i}>{e}</li>)}</ul>}
-        </div>
-      )}
 
       {/* ── TAB BAR DESKTOP (nascosta su mobile) ── */}
       <div className="hidden md:flex" style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "0 24px", background: c.lino }}>

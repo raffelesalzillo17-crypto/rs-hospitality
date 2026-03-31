@@ -4,6 +4,24 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-31 (aggiornamento 41 — rimozione sync iCal da /admin)
+
+### Eliminati
+- `app/api/sync-calendar/route.ts` — route API rimossa completamente
+- `app/admin/page.tsx`:
+  - Pulsante "⟳ Sync" dall'header
+  - State `syncing` e `syncResult`
+  - Funzione `handleSync()` e chiamata a `/api/sync-calendar`
+  - Banner verde/giallo post-sync
+
+### Invariato
+- Prenotazioni esistenti (incluse quelle con `uid_ical`)
+- Deduplicazione `uid_ical` in `fetchBookings` (serve per prenotazioni già in DB)
+- Legenda "Blocco iCal" nel calendario desktop (prenotazioni storiche)
+- Import email automatico via Make.com → `/api/email-import`
+
+---
+
 ## [Unreleased] — 2026-03-31 (aggiornamento 40 — regola canali definitiva)
 
 ### Verificato / documentato
