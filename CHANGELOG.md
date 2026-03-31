@@ -4,6 +4,21 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-31 (aggiornamento 40 — regola canali definitiva)
+
+### Verificato / documentato
+- Canali attivi nel sistema: **Airbnb**, **Booking**, **Diretto**, **No Tax**
+- `constants.ts` CHANNELS, OTA_COMMISSION, CEDOLARE_BY_CHANNEL già corretti:
+  - Airbnb → comm 18.91%, cedolare 21% sul lordo
+  - Booking → comm 20.15%, cedolare 21% sul lordo
+  - Diretto → comm 0%, cedolare 21% sul lordo
+  - No Tax → comm 0%, cedolare 0% (usa `total_price`, escluso da lordo fiscale)
+- Form prenotazione: default canale "Diretto", tutti e 4 i canali disponibili via select
+- `calcFin`: branch esplicito No Tax (total_price), branch generale per gli altri 3
+- Dati Marzo 2026 invariati: lordo fiscale €844, utile reale €558.43
+
+---
+
 ## [Unreleased] — 2026-03-31 (aggiornamento 39 — DB: canale Diretto → No Tax per Marzo 2026)
 
 ### Modificati
