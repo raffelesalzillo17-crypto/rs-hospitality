@@ -4,6 +4,20 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-31 (aggiornamento 37 — 4 fix UX/design /admin)
+
+### Fix
+- **FIX 1 — Header**: rimosso label "RS Hospitality" sopra "RS Central"; titolo unico bold su mobile e desktop
+- **FIX 2 — WhatsApp button**: estratto in `app/components/WhatsAppButton.tsx` con controllo `usePathname` — non appare su `/admin`
+- **FIX 3 — "Nessun importo"**: rimosso dal card mobile prenotazioni; se `gross_amount` è null non mostra nulla
+- **FIX 4 — Desktop moderno**:
+  - Tab bar: uppercase tracking-widest 11px, underline tabacco 2px su tab attivo, niente sfondo colorato
+  - Bottoni header (Sync/Aggiorna/Esci): più piccoli (34px), outline style, Sync senza fill tabacco
+  - Report — card utile: sfondo tabacco (non verde), valore in `#C9A96E`
+  - Report — tutte le colonne Utile: verde `#1a4d1a` sostituito con `c.tabacco`; rosso `#a03030` mantenuto per valori negativi
+
+---
+
 ## [Unreleased] — 2026-03-31 (aggiornamento 36 — cedolare lordo, form in cima, blocca date, copia link mobile)
 
 ### Modificati

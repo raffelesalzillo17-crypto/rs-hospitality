@@ -374,21 +374,20 @@ export default function AdminPage() {
       {/* ── HEADER ── */}
       <header style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", background: c.lino, gap: 8 }}>
         <div>
-          <span style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: c.cammello }}>RS Hospitality</span>
-          <h1 style={{ fontSize: 17, fontWeight: 600, marginTop: 1, color: c.tabacco, letterSpacing: "-0.01em" }}>RS Central</h1>
+          <h1 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: c.tabacco, letterSpacing: "-0.01em" }}>RS Central</h1>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button onClick={handleSync} disabled={syncing}
-            style={{ padding: "0 14px", height: 44, border: `1px solid ${c.tabacco}`, borderRadius: 3, background: c.tabacco, color: c.lino, fontSize: 13, cursor: syncing ? "default" : "pointer", opacity: syncing ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
+            style={{ padding: "0 12px", height: 34, border: `1px solid ${c.tabacco}`, borderRadius: 3, background: "transparent", color: c.tabacco, fontSize: 12, cursor: syncing ? "default" : "pointer", opacity: syncing ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500, letterSpacing: "0.04em" }}>
             {syncing ? "..." : "⟳ Sync"}
           </button>
           <button onClick={fetchBookings}
-            style={{ padding: "0 12px", height: 44, border: `1px solid ${c.cammello}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "0 10px", height: 34, border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 16, cursor: "pointer", fontFamily: "inherit" }}>
             ↻
           </button>
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push("/admin/login"); }}
-            style={{ padding: "0 12px", height: 44, border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "0 10px", height: 34, border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
             Esci
           </button>
         </div>
@@ -407,7 +406,7 @@ export default function AdminPage() {
         {(["calendario", "prenotazioni", "report", "import"] as const).map(tab => (
           <button key={tab}
             onClick={() => { setActiveTab(tab); if (tab === "import") fetchImportLogs(); }}
-            style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "capitalize", letterSpacing: "0.04em" }}>
+            style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 11, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "uppercase", letterSpacing: "0.12em" }}>
             {tab === "import" ? "Import Log" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
@@ -672,7 +671,7 @@ export default function AdminPage() {
                             {/* Riga 3: lordo + utile */}
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                               <span style={{ fontSize: 20, fontWeight: 500, color: c.tabacco }}>
-                                {b.gross_amount ? `€ ${b.gross_amount}` : <span style={{ fontSize: 14, color: c.sabbia }}>Nessun importo</span>}
+                                {b.gross_amount ? `€ ${b.gross_amount}` : null}
                               </span>
                               {fin ? (
                                 <span style={{ fontSize: 18, fontWeight: 700, color: fin.utile_reale >= 0 ? "#1a4d1a" : "#a03030" }}>
@@ -903,9 +902,9 @@ export default function AdminPage() {
                           <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.sabbia, margin: "0 0 6px" }}>Lordo mese</p>
                           <p style={{ fontSize: 22, fontWeight: 700, color: c.lino, margin: 0, lineHeight: 1 }}>{eur(totali.lordo)}</p>
                         </div>
-                        <div style={{ background: totali.utile >= 0 ? "#1a4d1a" : "#7a1a1a", borderRadius: 10, padding: "16px 18px" }}>
-                          <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", margin: "0 0 6px" }}>Utile reale</p>
-                          <p style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1 }}>{eur(totali.utile)}</p>
+                        <div style={{ background: c.tabacco, borderRadius: 10, padding: "16px 18px" }}>
+                          <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.sabbia, margin: "0 0 6px" }}>Utile reale</p>
+                          <p style={{ fontSize: 22, fontWeight: 700, color: "#C9A96E", margin: 0, lineHeight: 1 }}>{eur(totali.utile)}</p>
                         </div>
                       </div>
                       {/* Stat secondarie */}
@@ -939,7 +938,7 @@ export default function AdminPage() {
                               </div>
                               <div style={{ textAlign: "right", flexShrink: 0 }}>
                                 <div style={{ fontSize: 14, fontWeight: 600, color: c.tabacco }}>{b.gross_amount ? `€ ${b.gross_amount}` : "—"}</div>
-                                {f && <div style={{ fontSize: 12, fontWeight: 700, color: f.utile_reale >= 0 ? "#1a4d1a" : "#a03030" }}>{eur(f.utile_reale)}</div>}
+                                {f && <div style={{ fontSize: 12, fontWeight: 700, color: f.utile_reale >= 0 ? c.tabacco : "#a03030" }}>{eur(f.utile_reale)}</div>}
                               </div>
                               <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 20, background: badge.bg, color: badge.color, flexShrink: 0 }}>
                                 {fmtCh(b.channel)}
@@ -988,7 +987,7 @@ export default function AdminPage() {
                                 <td style={{ padding: "10px 12px", fontWeight: 600, color: c.tabacco }}>{name}</td>
                                 <td style={{ ...tdNum, textAlign: "center", color: c.cammello }}>{rows.length}</td>
                                 {vals.map((v, vi) => (
-                                  <td key={vi} style={{ ...tdNum, fontWeight: vi === vals.length - 1 ? 700 : 400, color: vi === vals.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
+                                  <td key={vi} style={{ ...tdNum, fontWeight: vi === vals.length - 1 ? 700 : 400, color: vi === vals.length - 1 ? (v >= 0 ? c.tabacco : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
                                     {eur(v)}
                                   </td>
                                 ))}
@@ -999,7 +998,7 @@ export default function AdminPage() {
                             <td style={{ padding: "11px 12px", fontWeight: 700, fontSize: 13, color: c.tabacco }}>Totale generale</td>
                             <td style={{ ...tdNum, textAlign: "center", fontWeight: 700, color: c.tabacco }}>{monthBookings.length}</td>
                             {totRow(totali).map((v, vi) => (
-                              <td key={vi} style={{ ...tdNum, fontWeight: 700, color: vi === COL_LABELS.length - 1 ? (v >= 0 ? "#1a4d1a" : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
+                              <td key={vi} style={{ ...tdNum, fontWeight: 700, color: vi === COL_LABELS.length - 1 ? (v >= 0 ? c.tabacco : "#a03030") : vi % 2 === 1 ? "#a03030" : c.tabacco }}>
                                 {eur(v)}
                               </td>
                             ))}
@@ -1039,7 +1038,7 @@ export default function AdminPage() {
                                   <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.cedolare) : "—"}</td>
                                   <td style={{ padding: "8px 10px", textAlign: "right" }}>{f ? eur(f.netto_ricevuto) : "—"}</td>
                                   <td style={{ padding: "8px 10px", textAlign: "right", color: "#a03030" }}>{f ? eur(f.costi_pulizie) : "—"}</td>
-                                  <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: f ? (f.utile_reale >= 0 ? "#1a4d1a" : "#a03030") : c.sabbia }}>{f ? eur(f.utile_reale) : "—"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: f ? (f.utile_reale >= 0 ? c.tabacco : "#a03030") : c.sabbia }}>{f ? eur(f.utile_reale) : "—"}</td>
                                 </tr>
                               );
                             })}
