@@ -71,7 +71,7 @@ function calcFin(b: Booking) {
   const cedRate         = CEDOLARE_BY_CHANNEL[ch] ?? CEDOLARE_RATE;
   const commissione_ota = g * rate;
   const netto_dopo_comm = g - commissione_ota;
-  const cedolare        = netto_dopo_comm * cedRate;
+  const cedolare        = g * cedRate;           // cedolare sul lordo (Google Sheet)
   const netto_ricevuto  = netto_dopo_comm - cedolare;
   const utile_reale     = netto_ricevuto - COSTI_PULIZIE;
   return { commissione_ota, netto_dopo_comm, cedolare, cedRate, netto_ricevuto, costi_pulizie: COSTI_PULIZIE, utile_reale };
@@ -200,6 +200,16 @@ export default function AdminPage() {
         }
       });
   }, [fetchBookings, fetchImportLogs]);
+
+  // ── Scroll lock body quando il modale è aperto ────────────────────────────
+  useEffect(() => {
+    if (selectedBooking) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [selectedBooking]);
 
   // ── Sync ──────────────────────────────────────────────────────────────────
   async function handleSync() {
@@ -576,6 +586,55 @@ export default function AdminPage() {
           ══════════════════════════════════════════════════════════ */}
           {!loading && activeTab === "prenotazioni" && (
             <div>
+              {/* ── FORM AGGIUNGI PRENOTAZIONE (in cima) ── */}
+              <div style={{ marginBottom: 20 }}>
+                <button onClick={() => setFormOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
+                  <span style={{ fontSize: 18 }}>{formOpen ? "−" : "+"}</span>
+                  Aggiungi prenotazione manuale
+                </button>
+                {formOpen && (
+                  <form onSubmit={handleSubmit} style={{ marginTop: 16, background: c.sabbia, borderRadius: 6, padding: "24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 24px" }}>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={lbl}>Alloggio</label>
+                      <select name="property_id" value={form.property_id} onChange={e => { const pid = e.target.value; const prop = properties.find(p => p.id === pid); setForm(f => ({ ...f, property_id: pid, channel: prop?.is_private ? "No Tax" : f.channel })); }} style={inp} required>
+                        {properties.length === 0 && <option value="">Caricamento…</option>}
+                        {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div><label style={lbl}>Nome ospite</label><input value={form.nome_ospite} onChange={e => setForm(f => ({ ...f, nome_ospite: e.target.value }))} required placeholder="Mario Rossi" style={inp} /></div>
+                    <div><label style={lbl}>Telefono</label><input value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="+39 333 0000000" style={inp} /></div>
+                    <div><label style={lbl}>Arrivo</label><input type="date" value={form.check_in} onChange={e => setForm(f => ({ ...f, check_in: e.target.value }))} required style={inp} /></div>
+                    <div><label style={lbl}>Partenza</label><input type="date" value={form.check_out} onChange={e => setForm(f => ({ ...f, check_out: e.target.value }))} required style={inp} /></div>
+                    <div><label style={lbl}>Ospiti</label><select value={form.num_guests} onChange={e => setForm(f => ({ ...f, num_guests: e.target.value }))} style={inp}>{[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}</select></div>
+                    <div><label style={lbl}>Canale</label><select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value as typeof form.channel }))} style={inp}>{CHANNELS.map(ch => <option key={ch} value={ch}>{ch}</option>)}</select></div>
+                    <div><label style={lbl}>Stato</label><select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as typeof form.status }))} style={inp}>{STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select></div>
+                    <div><label style={lbl}>Pagamento (€)</label><input type="number" value={form.total_price} onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))} placeholder="0" style={inp} /></div>
+                    <div style={{ gridColumn: "1 / -1" }}><label style={lbl}>Note</label><textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Check-in tardivo…" style={{ ...inp, resize: "vertical" }} /></div>
+                    {formError && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13 }}>Errore: {formError}</div>}
+                    {saved     && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#d0ead0", borderRadius: 3, color: "#1a4d1a", fontSize: 13 }}>Prenotazione salvata.</div>}
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <button type="submit" disabled={saving} style={{ padding: "12px 32px", background: c.tabacco, color: c.lino, border: "none", borderRadius: 3, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
+                        {saving ? "Salvataggio…" : "Aggiungi"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+              {/* ── BLOCCA DATE (in cima) ── */}
+              <div style={{ marginBottom: 24 }}>
+                <button onClick={() => setBlockOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
+                  <span style={{ fontSize: 18 }}>{blockOpen ? "−" : "+"}</span>
+                  Blocca date
+                </button>
+                {blockOpen && (
+                  <form onSubmit={handleBlockSubmit} style={{ marginTop: 12, background: c.sabbia, borderRadius: 6, padding: "20px 24px", display: "flex", flexWrap: "wrap", gap: "16px 24px", alignItems: "flex-end" }}>
+                    <div><label style={lbl}>Arrivo</label><input type="date" required value={blockForm.check_in} onChange={e => setBlockForm(f => ({ ...f, check_in: e.target.value }))} style={{ ...inp, width: 160 }} /></div>
+                    <div><label style={lbl}>Partenza</label><input type="date" required value={blockForm.check_out} onChange={e => setBlockForm(f => ({ ...f, check_out: e.target.value }))} style={{ ...inp, width: 160 }} /></div>
+                    <button type="submit" disabled={blockSaving} style={{ padding: "10px 24px", background: "#555", color: "#fff", border: "none", borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: blockSaving ? "default" : "pointer", opacity: blockSaving ? 0.6 : 1 }}>{blockSaving ? "Salvo…" : "Blocca"}</button>
+                  </form>
+                )}
+              </div>
+
               {sortedBookings.length === 0
                 ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessuna prenotazione.</p>
                 : (
@@ -599,10 +658,16 @@ export default function AdminPage() {
                                 {fmtCh(b.channel)}
                               </span>
                             </div>
-                            {/* Riga 2: date + alloggio */}
-                            <div style={{ fontSize: 13, color: c.cammello, marginBottom: 10 }}>
-                              {fmt(b.check_in)} → {fmt(b.check_out)}
-                              {getPropName(b) && <span style={{ marginLeft: 8, padding: "1px 6px", borderRadius: 4, background: c.sabbia, fontSize: 11, color: c.tabacco }}>{getPropName(b)}</span>}
+                            {/* Riga 2: date + alloggio + copia link */}
+                            <div style={{ fontSize: 13, color: c.cammello, marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                              <div style={{ minWidth: 0 }}>
+                                {fmt(b.check_in)} → {fmt(b.check_out)}
+                                {getPropName(b) && <span style={{ marginLeft: 8, padding: "1px 6px", borderRadius: 4, background: c.sabbia, fontSize: 11, color: c.tabacco }}>{getPropName(b)}</span>}
+                              </div>
+                              <button onClick={e => { e.stopPropagation(); copyLink(b.id); }}
+                                style={{ flexShrink: 0, padding: "4px 10px", height: 28, background: copiedId === b.id ? "#d0ead0" : c.sabbia, color: copiedId === b.id ? "#1a4d1a" : c.tabacco, border: "none", borderRadius: 4, fontSize: 11, fontFamily: "inherit", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                                {copiedId === b.id ? "Copiato!" : "Copia link"}
+                              </button>
                             </div>
                             {/* Riga 3: lordo + utile */}
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -682,10 +747,8 @@ export default function AdminPage() {
                                 </td>
                                 <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }} onClick={e => e.stopPropagation()}>
                                   {copiedId === b.id
-                                    ? <span style={{ fontSize: 12, color: "#1a4d1a", fontWeight: 600 }}>Copiato!</span>
-                                    : b.guest_id !== null
-                                    ? <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>Completato</span>
-                                    : <button onClick={() => copyLink(b.id)} style={{ padding: "4px 10px", background: c.cammello, color: "#fff", border: "none", borderRadius: 4, fontSize: 12, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>Link</button>
+                                    ? <span style={{ fontSize: 12, color: c.tabacco, fontWeight: 600 }}>Copiato!</span>
+                                    : <button onClick={() => copyLink(b.id)} style={{ padding: "4px 10px", background: c.sabbia, color: c.tabacco, border: "none", borderRadius: 4, fontSize: 11, fontFamily: "inherit", fontWeight: 600, cursor: "pointer" }}>Copia link</button>
                                   }
                                 </td>
                               </tr>
@@ -990,111 +1053,6 @@ export default function AdminPage() {
             );
           })()}
 
-          {/* ══════════════════════════════════════════════════════════
-              FORM AGGIUNGI PRENOTAZIONE
-          ══════════════════════════════════════════════════════════ */}
-          <div style={{ marginTop: 48 }}>
-            <button onClick={() => setFormOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
-              <span style={{ fontSize: 18 }}>{formOpen ? "−" : "+"}</span>
-              Aggiungi prenotazione manuale
-            </button>
-
-            {formOpen && (
-              <form onSubmit={handleSubmit} style={{ marginTop: 16, background: c.sabbia, borderRadius: 6, padding: "28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 24px" }}>
-
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={lbl}>Alloggio</label>
-                  <select name="property_id" value={form.property_id} onChange={e => {
-                      const pid = e.target.value;
-                      const prop = properties.find(p => p.id === pid);
-                      setForm(f => ({ ...f, property_id: pid, channel: prop?.is_private ? "No Tax" : f.channel }));
-                    }} style={inp} required>
-                    {properties.length === 0 && <option value="">Caricamento…</option>}
-                    {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={lbl}>Nome ospite</label>
-                  <input value={form.nome_ospite} onChange={e => setForm(f => ({ ...f, nome_ospite: e.target.value }))} required placeholder="Mario Rossi" style={inp} />
-                </div>
-                <div>
-                  <label style={lbl}>Telefono</label>
-                  <input value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="+39 333 0000000" style={inp} />
-                </div>
-
-                <div>
-                  <label style={lbl}>Arrivo</label>
-                  <input type="date" value={form.check_in} onChange={e => setForm(f => ({ ...f, check_in: e.target.value }))} required style={inp} />
-                </div>
-                <div>
-                  <label style={lbl}>Partenza</label>
-                  <input type="date" value={form.check_out} onChange={e => setForm(f => ({ ...f, check_out: e.target.value }))} required style={inp} />
-                </div>
-
-                <div>
-                  <label style={lbl}>Ospiti</label>
-                  <select value={form.num_guests} onChange={e => setForm(f => ({ ...f, num_guests: e.target.value }))} style={inp}>
-                    {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={lbl}>Canale</label>
-                  <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value as typeof form.channel }))} style={inp}>
-                    {CHANNELS.map(ch => <option key={ch} value={ch}>{ch}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={lbl}>Stato</label>
-                  <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as typeof form.status }))} style={inp}>
-                    {STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={lbl}>Pagamento (€)</label>
-                  <input type="number" value={form.total_price} onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))} placeholder="0" style={inp} />
-                </div>
-
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={lbl}>Note</label>
-                  <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Check-in tardivo…" style={{ ...inp, resize: "vertical" }} />
-                </div>
-
-                {formError && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#fad7d7", borderRadius: 3, color: "#7a1a1a", fontSize: 13 }}>Errore: {formError}</div>}
-                {saved     && <div style={{ gridColumn: "1 / -1", padding: "10px 14px", background: "#d0ead0", borderRadius: 3, color: "#1a4d1a", fontSize: 13 }}>Prenotazione salvata.</div>}
-
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <button type="submit" disabled={saving} style={{ padding: "12px 32px", background: c.tabacco, color: c.lino, border: "none", borderRadius: 3, fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit", fontWeight: 500 }}>
-                    {saving ? "Salvataggio…" : "Aggiungi"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {/* ── BLOCCA DATE ── */}
-          <div style={{ marginTop: 24, marginBottom: 16 }}>
-            <button onClick={() => setBlockOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: c.cammello, fontFamily: "inherit" }}>
-              <span style={{ fontSize: 18 }}>{blockOpen ? "−" : "+"}</span>
-              Blocca date
-            </button>
-            {blockOpen && (
-              <form onSubmit={handleBlockSubmit} style={{ marginTop: 12, background: c.sabbia, borderRadius: 6, padding: "20px 24px", display: "flex", flexWrap: "wrap", gap: "16px 24px", alignItems: "flex-end" }}>
-                <div>
-                  <label style={lbl}>Arrivo</label>
-                  <input type="date" required value={blockForm.check_in} onChange={e => setBlockForm(f => ({ ...f, check_in: e.target.value }))} style={{ ...inp, width: 160 }} />
-                </div>
-                <div>
-                  <label style={lbl}>Partenza</label>
-                  <input type="date" required value={blockForm.check_out} onChange={e => setBlockForm(f => ({ ...f, check_out: e.target.value }))} style={{ ...inp, width: 160 }} />
-                </div>
-                <button type="submit" disabled={blockSaving} style={{ padding: "10px 24px", background: "#555", color: "#fff", border: "none", borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: blockSaving ? "default" : "pointer", opacity: blockSaving ? 0.6 : 1 }}>
-                  {blockSaving ? "Salvo…" : "Blocca"}
-                </button>
-              </form>
-            )}
-          </div>
         </div>
       </main>
 
@@ -1105,10 +1063,22 @@ export default function AdminPage() {
         style={{ background: c.lino, borderTop: `1px solid ${c.sabbia}`, zIndex: 50 }}>
         <div style={{ display: "flex" }}>
           {([
-            { tab: "calendario",   label: "Calendario",   icon: "▦" },
-            { tab: "prenotazioni", label: "Pren.",        icon: "≡" },
-            { tab: "report",       label: "Report",       icon: "◎" },
-          ] as { tab: "calendario" | "prenotazioni" | "report"; label: string; icon: string }[]).map(({ tab, label, icon }) => (
+            {
+              tab: "calendario",
+              label: "Calendario",
+              svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>,
+            },
+            {
+              tab: "prenotazioni",
+              label: "Pren.",
+              svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>,
+            },
+            {
+              tab: "report",
+              label: "Report",
+              svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="12" width="4" height="8"/><rect x="10" y="6" width="4" height="14"/><rect x="15" y="9" width="4" height="11"/></svg>,
+            },
+          ] as { tab: "calendario" | "prenotazioni" | "report"; label: string; svg: React.ReactNode }[]).map(({ tab, label, svg }) => (
             <button key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
@@ -1120,7 +1090,7 @@ export default function AdminPage() {
                 borderTop: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`,
                 minHeight: 56,
               }}>
-              <span style={{ fontSize: 22, lineHeight: 1 }}>{icon}</span>
+              {svg}
               <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
             </button>
           ))}
@@ -1136,9 +1106,9 @@ export default function AdminPage() {
         const fin = calcFin(b);
         return (
           <div onClick={() => { setSelectedBooking(null); setDeleteConfirm(false); }}
-            style={{ position: "fixed", inset: 0, background: "rgba(44,36,22,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+            style={{ position: "fixed", inset: 0, background: "rgba(44,36,22,0.5)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "28px 24px 40px", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}>
+              style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "28px 24px 40px", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
 
               {/* Handle */}
               <div style={{ width: 40, height: 4, background: c.sabbia, borderRadius: 2, margin: "0 auto 20px" }} />

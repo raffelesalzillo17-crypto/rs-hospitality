@@ -36,15 +36,13 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === "/admin/login";
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
 
-  // Redirect unauthenticated users away from /admin/*
-  if (isAdminRoute && !isLoginPage && !user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
-  }
-
-  // Redirect authenticated users away from /admin/login
-  if (isLoginPage && user) {
-    return NextResponse.redirect(new URL("/admin", request.url));
-  }
+  // Auth disabilitata — /admin accessibile senza login
+  // if (isAdminRoute && !isLoginPage && !user) {
+  //   return NextResponse.redirect(new URL("/admin/login", request.url));
+  // }
+  // if (isLoginPage && user) {
+  //   return NextResponse.redirect(new URL("/admin", request.url));
+  // }
 
   return response;
 }
