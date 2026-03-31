@@ -4,6 +4,17 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-03-31 (aggiornamento 39 — DB: canale Diretto → No Tax per Marzo 2026)
+
+### Modificati
+- **Database** (via Supabase MCP): `UPDATE bookings SET channel = 'No Tax' WHERE channel = 'Diretto' AND check_in BETWEEN '2026-03-01' AND '2026-03-31'`
+  - 2 prenotazioni aggiornate: 12 mar (€45) e 19 mar (€100)
+  - Marzo: nessuna prenotazione "Diretto" rimasta — tutti i canali sono Airbnb / Booking / No Tax
+- **Regola definitiva canali RS**: Airbnb (comm 18.91%, ced 21%), Booking (comm 20.15%, ced 21%), No Tax (comm 0%, ced 0%, utile = total_price − €20) — "Diretto" rimosso come canale operativo
+- Verifica Marzo post-update: lordo fiscale €844 (Airbnb €543 + Booking €301), utile reale totale €558.43 ✓
+
+---
+
 ## [Unreleased] — 2026-03-31 (aggiornamento 38 — No Tax esclusa dal lordo fiscale nel Report)
 
 ### Modificati
