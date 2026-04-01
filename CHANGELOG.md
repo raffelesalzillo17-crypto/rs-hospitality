@@ -4,6 +4,19 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-04-01 (aggiornamento 42 — restyling desktop /admin)
+
+### Modificato — `app/admin/page.tsx`
+- **Header**: bottoni Aggiorna/Esci → height 32px, bordo sabbia, no sfondo; Esci uppercase 10px tracking-widest
+- **Tab bar desktop**: nessuna modifica necessaria — stile già corretto
+- **Tabella prenotazioni desktop**: righe alternate bianco/#FAFAF8; colonne Comm./Cedolare/Pulizie in cammello (non rosso); Utile in tabacco bold (rimosso verde #1a4d1a)
+- **Report desktop — card**: "Utile reale" → sfondo cammello #8B7355, testo lino (era tabacco)
+- **Report desktop — tabella riepilogo**: valori negativi (Comm./Ced./Pulizie) in cammello; Utile sempre tabacco bold; rimosso #a03030 ovunque nel report
+- **Report desktop — dettaglio prenotazioni**: stesse correzioni colori + righe alternate bianco/#FAFAF8
+- **Report mobile**: card Utile reale sfondo cammello; utile lista in tabacco (rimosso rosso condizionale)
+
+---
+
 ## [Unreleased] — 2026-03-31 (aggiornamento 41 — rimozione sync iCal da /admin)
 
 ### Eliminati
