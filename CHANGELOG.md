@@ -4,6 +4,31 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-04-01 (aggiornamento 43 — rimozione Import Log + PDF mensile)
+
+### Eliminati — `app/admin/page.tsx`
+- Tab "Import Log" dalla tab bar desktop e dal tipo `activeTab`
+- Intera sezione JSX Import Log (CSV import + tabella log)
+- State: `importLogs`, `csvImporting`, `csvResult`
+- Callback: `fetchImportLogs`, chiamata in `useEffect` e nella tab bar
+- Funzione: `handleCsvImport`
+- Import: `ImportLog` da `@/lib/types`
+
+### Aggiunto
+- `app/api/report-pdf/route.ts` — route GET che genera PDF del report mensile
+  - Accetta `?month=YYYY-MM`
+  - Legge prenotazioni da Supabase con stessa logica finanziaria del frontend
+  - PDF A4 landscape: header RS HOSPITALITY, riepilogo per alloggio, dettaglio prenotazioni, footer con data
+  - Palette tabacco/cammello/lino/sabbia; usa jsPDF + jspdf-autotable
+- `app/admin/page.tsx`: pulsante "Scarica PDF" nel navigatore mese del Report desktop
+  - Chiama `/api/report-pdf?month=YYYY-MM`, scarica `RS_Report_MESE_ANNO.pdf`
+
+### Dipendenze aggiunte
+- `jspdf` ^4.2.1
+- `jspdf-autotable` ^5.0.7
+
+---
+
 ## [Unreleased] — 2026-04-01 (aggiornamento 42 — restyling desktop /admin)
 
 ### Modificato — `app/admin/page.tsx`

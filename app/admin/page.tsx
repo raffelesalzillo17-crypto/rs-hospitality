@@ -8,7 +8,7 @@ import {
   CHANNEL_LABEL, MONTH_IT, ICAL_NOISE_LABELS, PALETTE,
   OTA_COMMISSION, CEDOLARE_BY_CHANNEL, CEDOLARE_RATE, COSTI_PULIZIE,
 } from "@/lib/constants";
-import type { Booking, Guest, Property, ImportLog } from "@/lib/types";
+import type { Booking, Guest, Property } from "@/lib/types";
 
 const supabase = createSupabaseBrowser();
 
@@ -139,7 +139,7 @@ export default function AdminPage() {
   const [loading,    setLoading]    = useState(true);
   const [dbError,    setDbError]    = useState<string | null>(null);
 
-  const [activeTab,    setActiveTab]    = useState<"calendario" | "prenotazioni" | "import" | "report">("calendario");
+  const [activeTab,    setActiveTab]    = useState<"calendario" | "prenotazioni" | "report">("calendario");
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d;
   });
@@ -148,8 +148,6 @@ export default function AdminPage() {
   const [deleteConfirm,   setDeleteConfirm]   = useState(false);
   const [copiedId,        setCopiedId]        = useState<string | null>(null);
   const [editPrice,       setEditPrice]       = useState<{ id: string; value: string } | null>(null);
-
-  const [importLogs, setImportLogs] = useState<ImportLog[]>([]);
 
   const [formOpen,   setFormOpen]   = useState(false);
   const [form,       setForm]       = useState(emptyForm);
@@ -160,9 +158,6 @@ export default function AdminPage() {
   const [blockOpen,   setBlockOpen]   = useState(false);
   const [blockForm,   setBlockForm]   = useState({ check_in: "", check_out: "" });
   const [blockSaving, setBlockSaving] = useState(false);
-
-  const [csvImporting, setCsvImporting] = useState(false);
-  const [csvResult,    setCsvResult]    = useState<{ updated: number; created?: number; skipped: number; errors: string[] } | null>(null);
 
   const [reportMonth, setReportMonth] = useState(() => {
     const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() };
@@ -189,18 +184,8 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
-  const fetchImportLogs = useCallback(async () => {
-    const { data } = await supabase
-      .from("import_logs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    setImportLogs((data ?? []) as ImportLog[]);
-  }, []);
-
   useEffect(() => {
     fetchBookings();
-    fetchImportLogs();
     supabase.from("properties").select("id, name, is_private").eq("active", true).order("name")
       .then(({ data }) => {
         if (data?.length) {
@@ -213,7 +198,7 @@ export default function AdminPage() {
           }));
         }
       });
-  }, [fetchBookings, fetchImportLogs]);
+  }, [fetchBookings]);
 
   // ── Scroll lock body quando il modale è aperto ────────────────────────────
   useEffect(() => {
@@ -279,33 +264,6 @@ export default function AdminPage() {
     setBlockOpen(false);
     setBlockSaving(false);
     await fetchBookings();
-  }
-
-  // ── Import CSV ─────────────────────────────────────────────────────────────
-  async function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setCsvImporting(true); setCsvResult(null);
-    try {
-      const csv = (await file.text()).replace(/^\uFEFF/, ""); // strip UTF-8 BOM
-      const res = await fetch("/api/import-csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-RS-Secret": "rshospitality2026" },
-        body: JSON.stringify({ csv }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCsvResult({ updated: 0, skipped: 0, errors: [data?.error ?? `Errore ${res.status}`] });
-      } else {
-        setCsvResult(data);
-        await fetchBookings();
-      }
-    } catch (err) {
-      setCsvResult({ updated: 0, skipped: 0, errors: [(err as Error).message ?? "Errore sconosciuto"] });
-    } finally {
-      setCsvImporting(false);
-      e.target.value = "";
-    }
   }
 
   // ── Copy link ──────────────────────────────────────────────────────────────
@@ -393,11 +351,11 @@ export default function AdminPage() {
 
       {/* ── TAB BAR DESKTOP (nascosta su mobile) ── */}
       <div className="hidden md:flex" style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "0 24px", background: c.lino }}>
-        {(["calendario", "prenotazioni", "report", "import"] as const).map(tab => (
+        {(["calendario", "prenotazioni", "report"] as const).map(tab => (
           <button key={tab}
-            onClick={() => { setActiveTab(tab); if (tab === "import") fetchImportLogs(); }}
+            onClick={() => setActiveTab(tab)}
             style={{ padding: "12px 20px", border: "none", background: "none", fontSize: 11, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", color: activeTab === tab ? c.tabacco : c.cammello, borderBottom: `2px solid ${activeTab === tab ? c.tabacco : "transparent"}`, textTransform: "uppercase", letterSpacing: "0.12em" }}>
-            {tab === "import" ? "Import Log" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -753,75 +711,6 @@ export default function AdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════
-              TAB: IMPORT LOG
-          ══════════════════════════════════════════════════════════ */}
-          {activeTab === "import" && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: 0, letterSpacing: "-0.01em" }}>Ultimi 10 import email</h2>
-                <button onClick={fetchImportLogs} style={{ padding: "6px 14px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "none", fontSize: 12, color: c.cammello, fontFamily: "inherit", cursor: "pointer" }}>Aggiorna</button>
-              </div>
-              <div style={{ marginBottom: 32, background: c.sabbia, borderRadius: 6, padding: "20px 24px" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: c.tabacco, margin: "0 0 4px", letterSpacing: "0.04em", textTransform: "uppercase" }}>Import storico CSV</p>
-                <p style={{ fontSize: 12, color: c.cammello, margin: "0 0 14px" }}>Carica il CSV esportato da Airbnb per aggiornare nome ospite e importo sulle prenotazioni esistenti.</p>
-                <label style={{ display: "inline-block", padding: "9px 18px", background: c.tabacco, color: c.lino, borderRadius: 3, fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: csvImporting ? "default" : "pointer", opacity: csvImporting ? 0.6 : 1, letterSpacing: "0.04em" }}>
-                  {csvImporting ? "Importazione…" : "Scegli file CSV"}
-                  <input type="file" accept=".csv" style={{ display: "none" }} disabled={csvImporting} onChange={handleCsvImport} />
-                </label>
-                {csvResult && (
-                  <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 4, background: (csvResult.errors?.length ?? 0) > 0 ? "#fef3cd" : "#d0ead0", color: (csvResult.errors?.length ?? 0) > 0 ? "#6b4c00" : "#1a4d1a", fontSize: 13 }}>
-                    {(csvResult.created ?? 0) > 0 && <><strong>{csvResult.created} create</strong>, </>}
-                    <strong>{csvResult.updated} aggiornate</strong>{csvResult.skipped > 0 ? `, ${csvResult.skipped} saltate` : ""}.
-                    {(csvResult.errors?.length ?? 0) > 0 && <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>{csvResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
-                  </div>
-                )}
-              </div>
-
-              {importLogs.length === 0
-                ? <p style={{ color: c.cammello, fontSize: 14 }}>Nessun import ancora.</p>
-                : (
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                      <thead>
-                        <tr style={{ borderBottom: `2px solid ${c.sabbia}` }}>
-                          {["Data", "Canale", "Ospite", "Ref.", "Azione", "Errore"].map(h => (
-                            <th key={h} style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: c.cammello, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {importLogs.map((log, i) => {
-                          const actionStyle: Record<string, { bg: string; color: string }> = {
-                            created: { bg: "#d0ead0", color: "#1a4d1a" },
-                            updated: { bg: "#fef3cd", color: "#6b4c00" },
-                            skipped: { bg: "#e8e8e8", color: "#555" },
-                            error:   { bg: "#fad7d7", color: "#7a1a1a" },
-                          };
-                          const style = actionStyle[log.action ?? ""] ?? { bg: c.sabbia, color: c.tabacco };
-                          const dt = log.created_at ? new Date(log.created_at) : null;
-                          const dateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")} ${dt.getHours().toString().padStart(2,"0")}:${dt.getMinutes().toString().padStart(2,"0")}` : "—";
-                          return (
-                            <tr key={log.id} style={{ borderBottom: `1px solid ${c.sabbia}`, background: i % 2 === 0 ? c.lino : "rgba(212,201,181,0.18)" }}>
-                              <td style={{ padding: "10px 12px", whiteSpace: "nowrap", color: c.cammello, fontSize: 12 }}>{dateStr}</td>
-                              <td style={{ padding: "10px 12px", textTransform: "capitalize" }}>{log.channel ?? "—"}</td>
-                              <td style={{ padding: "10px 12px" }}>{log.guest_name ?? "—"}</td>
-                              <td style={{ padding: "10px 12px", fontFamily: "monospace", fontSize: 12, color: c.cammello }}>{log.booking_ref ?? "—"}</td>
-                              <td style={{ padding: "10px 12px" }}>
-                                <span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: style.bg, color: style.color }}>{log.action ?? "—"}</span>
-                              </td>
-                              <td style={{ padding: "10px 12px", fontSize: 12, color: "#7a1a1a", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={log.error_message ?? ""}>{log.error_message ?? ""}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )
-              }
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════
               TAB: REPORT
           ══════════════════════════════════════════════════════════ */}
           {activeTab === "report" && (() => {
@@ -955,6 +844,12 @@ export default function AdminPage() {
                         style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
                     </div>
                     <span style={{ fontSize: 12, color: c.cammello }}>{monthBookings.length} prenotazioni · {totali.count} con importo lordo</span>
+                    <a
+                      href={`/api/report-pdf?month=${year}-${String(month + 1).padStart(2, "0")}`}
+                      download={`RS_Report_${MONTH_IT[month].toUpperCase()}_${year}.pdf`}
+                      style={{ marginLeft: "auto", padding: "0 14px", height: 32, lineHeight: "32px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 10, fontFamily: "inherit", textTransform: "uppercase", letterSpacing: "0.15em", textDecoration: "none", whiteSpace: "nowrap" }}>
+                      Scarica PDF
+                    </a>
                   </div>
 
                   {monthBookings.length === 0 ? (
