@@ -82,10 +82,14 @@ export async function GET(req: NextRequest) {
   const mese = parseInt(monthStr, 10); // 1-based
 
   const supabase = createServerClient();
+  const primoGiorno = `${monthParam}-01`;
+  const meseSuc    = mese === 12 ? `${anno + 1}-01-01` : `${anno}-${String(mese + 1).padStart(2, '0')}-01`;
+
   const { data: prenotazioni, error } = await supabase
     .from('bookings')
     .select('*, guests(full_name), properties(id, name)')
-    .ilike('check_in', `${monthParam}%`)
+    .gte('check_in', primoGiorno)
+    .lt('check_in', meseSuc)
     .neq('booking_type', 'block')
     .order('check_in', { ascending: true });
 
