@@ -328,7 +328,7 @@ export default function AdminPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: c.lino, color: c.tabacco, fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: c.lino, color: c.tabacco, fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "none" } as React.CSSProperties}>
 
       {/* ── HEADER ── */}
       <header style={{ borderBottom: `1px solid ${c.sabbia}`, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", background: c.lino, gap: 8 }}>
@@ -844,12 +844,21 @@ export default function AdminPage() {
                         style={{ background: "none", border: `1px solid ${c.sabbia}`, borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 18, color: c.tabacco }}>›</button>
                     </div>
                     <span style={{ fontSize: 12, color: c.cammello }}>{monthBookings.length} prenotazioni · {totali.count} con importo lordo</span>
-                    <a
-                      href={`/api/report-pdf?month=${year}-${String(month + 1).padStart(2, "0")}`}
-                      download={`RS_Report_${MONTH_IT[month].toUpperCase()}_${year}.pdf`}
-                      style={{ marginLeft: "auto", padding: "0 14px", height: 32, lineHeight: "32px", border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 10, fontFamily: "inherit", textTransform: "uppercase", letterSpacing: "0.15em", textDecoration: "none", whiteSpace: "nowrap" }}>
+                    <button
+                      onClick={() => {
+                        const url = `/api/report-pdf?month=${year}-${String(month + 1).padStart(2, "0")}`;
+                        const nome = `RS_Report_${MONTH_IT[month].toUpperCase()}_${year}.pdf`;
+                        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                        if (isIOS) {
+                          window.open(url, "_blank");
+                        } else {
+                          const a = document.createElement("a");
+                          a.href = url; a.download = nome; a.click();
+                        }
+                      }}
+                      style={{ marginLeft: "auto", padding: "0 14px", height: 32, border: `1px solid ${c.sabbia}`, borderRadius: 3, background: "transparent", color: c.cammello, fontSize: 10, fontFamily: "inherit", textTransform: "uppercase", letterSpacing: "0.15em", cursor: "pointer", whiteSpace: "nowrap" }}>
                       Scarica PDF
-                    </a>
+                    </button>
                   </div>
 
                   {monthBookings.length === 0 ? (

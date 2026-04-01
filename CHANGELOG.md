@@ -4,6 +4,41 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-04-01 (aggiornamento 44 — Mini App ospite completa)
+
+### Aggiunto
+- `app/checkin/[id]/page.tsx` — Landing redesign: sfondo tabacco full-screen, logo RS,
+  nome alloggio italic, pulsante CTA, bottom sheet con form semplificato
+  (nome completo, telefono, email, documento, nazionalità, n. ospiti)
+- `app/checkin/[id]/guida/page.tsx` — Hub post check-in (Server Component):
+  hero tabacco con 4 card (Check-in, Check-out, Wi-Fi, Naviga),
+  sezione istruzioni accesso, chatbot AI, contatti WhatsApp
+- `app/checkin/[id]/guida/WifiCard.tsx` — Client component: tap per copiare password Wi-Fi
+- `app/checkin/[id]/guida/ChatBot.tsx` — Client component: chatbot con streaming SSE,
+  UI bubble tabacco/sabbia, textarea auto-resize
+- `app/api/chat/route.ts` — Route POST streaming Anthropic (claude-haiku-4-5-20251001):
+  carica contesto alloggio da Supabase, system prompt multilingua,
+  risponde in SSE (`data: {"text":"..."}` / `data: [DONE]`)
+- `app/checkin/[id]/benvenuto/page.tsx` — Redirect permanente a /guida
+
+### Modificato
+- `app/admin/page.tsx`:
+  - Scroll bounce fix: `overflowY auto`, `WebkitOverflowScrolling touch`, `overscrollBehavior none`
+  - PDF button iOS: rileva `iPad|iPhone|iPod` → `window.open` invece di `<a download>`
+- `app/checkin/[id]/page.tsx`: redirect post-submit a `/guida` invece di `/benvenuto`
+
+### Database
+- `properties`: aggiunte colonne `checkin_time` (default 15:00), `checkout_time` (default 11:00), `istruzioni_accesso`
+- Il Tulipano: aggiornato con valori placeholder Wi-Fi + orari + istruzioni accesso
+
+### Dipendenze
+- `@anthropic-ai/sdk` installato
+
+### Configurazione richiesta
+- Aggiungere `ANTHROPIC_API_KEY` in Vercel Environment Variables
+
+---
+
 ## [Unreleased] — 2026-04-01 (aggiornamento 43 — rimozione Import Log + PDF mensile)
 
 ### Eliminati — `app/admin/page.tsx`
