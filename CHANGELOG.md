@@ -4,6 +4,24 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-04-03 (aggiornamento 46 — Guida ospite redesign completo)
+
+### Modificato
+- `app/checkin/[id]/guida/page.tsx` — Riscrittura completa: ora Server Component puro
+  che fetcha dati e delega tutto il rendering a `GuidaClient`
+- `next.config.ts` — Aggiunto `remotePatterns` per `images.unsplash.com` (next/image)
+
+### Aggiunto
+- `app/checkin/[id]/guida/GuidaClient.tsx` — Client Component con intera UI della guida:
+  hero foto 260px con overlay gradiente tabacco, logo RS in overlay, 4 card info (check-in,
+  check-out, wi-fi con copia+toast, naviga Maps), card benvenuto tabacco, 4 accordion
+  "Esplora la guida" (soggiorno statico; mangiare/luoghi/muoversi via AI con skeleton loader),
+  sezione contatti sabbia con pulsanti WhatsApp, footer lino. Icone SVG inline.
+- `app/api/guida/route.ts` — GET /api/guida?section=mangiare|luoghi|muoversi&property_id=...
+  Chiama claude-haiku-4-5-20251001, risponde JSON { content: "markdown" }
+
+---
+
 ## [Unreleased] — 2026-04-03 (aggiornamento 45 — Multi-ospite check-in + rimozione chatbot)
 
 ### Modificato
