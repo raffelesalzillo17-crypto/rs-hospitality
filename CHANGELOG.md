@@ -4,6 +4,22 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-04-03 (aggiornamento 45 — Multi-ospite check-in + rimozione chatbot)
+
+### Modificato
+- `app/checkin/[id]/page.tsx` — N. ospiti limitato a max 3; aggiunta logica dinamica per
+  ospiti aggiuntivi (ospite 2 e 3) con form: nome completo, tipo documento, numero documento,
+  nazionalità. Al submit: ospite principale salvato in `guests`, compagni salvati in
+  `guest_companions` (guest_id, booking_id, full_name, document_type, document_number, citizenship)
+- `app/checkin/[id]/guida/page.tsx` — Rimossa sezione "ASSISTENTE RS" (ChatBot) e relativo import;
+  rimosso riferimento a sezione 4 (ora sezione 3 — Contatti)
+
+### DB
+- Migrazione `add_document_fields_to_guest_companions`: aggiunto `document_type`, `document_number`,
+  `full_name` alla tabella `guest_companions`
+
+---
+
 ## [Unreleased] — 2026-04-01 (aggiornamento 44 — Mini App ospite completa)
 
 ### Aggiunto

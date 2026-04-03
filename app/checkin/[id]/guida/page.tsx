@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
-import ChatBot from "./ChatBot";
 import WifiCard from "./WifiCard";
 
 export const metadata: Metadata = {
@@ -165,16 +164,7 @@ export default async function GuidaPage({ params }: { params: Promise<{ id: stri
         </p>
       </div>
 
-      {/* ══ SEZIONE 3 — Chatbot AI ════════════════════════════ */}
-      <div style={{ background: "#fff", borderTop: `1px solid ${c.sabbia}`, borderBottom: `1px solid ${c.sabbia}` }}>
-        <ChatBot
-          bookingId={id}
-          guestName={guestName}
-          propertyName={property.name}
-        />
-      </div>
-
-      {/* ══ SEZIONE 4 — Contatti ══════════════════════════════ */}
+      {/* ══ SEZIONE 3 — Contatti ══════════════════════════════ */}
       <div style={{ background: c.sabbia, padding: "2rem 1.5rem", maxWidth: 520, margin: "0 auto" }}>
         <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: c.tabacco, margin: "0 0 1.25rem" }}>
           Hai bisogno di aiuto?

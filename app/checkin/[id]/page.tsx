@@ -43,17 +43,32 @@ const emptyForm = {
   num_ospiti:       "1",
 };
 
+type CompagnoForm = {
+  nome_completo:   string;
+  document_type:   DocType;
+  document_number: string;
+  nazionalita:     string;
+};
+
+const emptyCompagno = (): CompagnoForm => ({
+  nome_completo:   "",
+  document_type:   "Carta d'identità",
+  document_number: "",
+  nazionalita:     "Italiana",
+});
+
 export default function CheckInPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
 
-  const [booking,    setBooking]    = useState<Booking | null>(null);
-  const [notFound,   setNotFound]   = useState(false);
-  const [loading,    setLoading]    = useState(true);
-  const [formOpen,   setFormOpen]   = useState(false);
-  const [form,       setForm]       = useState(emptyForm);
-  const [submitting, setSubmitting] = useState(false);
-  const [error,      setError]      = useState("");
+  const [booking,     setBooking]    = useState<Booking | null>(null);
+  const [notFound,    setNotFound]   = useState(false);
+  const [loading,     setLoading]    = useState(true);
+  const [formOpen,    setFormOpen]   = useState(false);
+  const [form,        setForm]       = useState(emptyForm);
+  const [compagni,    setCompagni]   = useState<CompagnoForm[]>([]);
+  const [submitting,  setSubmitting] = useState(false);
+  const [error,       setError]      = useState("");
 
   // Carica prenotazione
   useEffect(() => {
@@ -80,16 +95,33 @@ export default function CheckInPage({ params }: { params: Promise<{ id: string }
     return () => { document.body.style.overflow = ""; };
   }, [formOpen]);
 
+  // Aggiorna array compagni al cambio num_ospiti
+  useEffect(() => {
+    const n = parseInt(form.num_ospiti, 10);
+    const extra = Math.max(0, n - 1);
+    setCompagni(prev => {
+      if (prev.length === extra) return prev;
+      if (prev.length < extra) return [...prev, ...Array.from({ length: extra - prev.length }, emptyCompagno)];
+      return prev.slice(0, extra);
+    });
+  }, [form.num_ospiti]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (!form.nome_completo.trim()) { setError("Inserisci il tuo nome completo."); return; }
-    if (!form.telefono.trim())       { setError("Inserisci il numero di telefono."); return; }
-    if (!form.document_number.trim()){ setError("Inserisci il numero del documento."); return; }
+    if (!form.nome_completo.trim())   { setError("Inserisci il tuo nome completo."); return; }
+    if (!form.telefono.trim())         { setError("Inserisci il numero di telefono."); return; }
+    if (!form.document_number.trim()) { setError("Inserisci il numero del documento."); return; }
+
+    for (let i = 0; i < compagni.length; i++) {
+      if (!compagni[i].nome_completo.trim())   { setError(`Inserisci il nome dell'ospite ${i + 2}.`); return; }
+      if (!compagni[i].document_number.trim()) { setError(`Inserisci il documento dell'ospite ${i + 2}.`); return; }
+    }
 
     setSubmitting(true);
 
+    // Salva ospite principale
     const { data: guest, error: gErr } = await supabase
       .from("guests")
       .insert({
@@ -105,12 +137,28 @@ export default function CheckInPage({ params }: { params: Promise<{ id: string }
 
     if (gErr || !guest) { setError("Errore nel salvataggio. Riprova."); setSubmitting(false); return; }
 
+    // Aggiorna booking
     const { error: bErr } = await supabase
       .from("bookings")
       .update({ guest_id: guest.id, num_guests: parseInt(form.num_ospiti, 10) })
       .eq("id", id);
 
     if (bErr) { setError("Errore nel collegamento prenotazione. Riprova."); setSubmitting(false); return; }
+
+    // Salva compagni
+    if (compagni.length > 0) {
+      const righe = compagni.map(c => ({
+        guest_id:        guest.id,
+        booking_id:      id,
+        full_name:       c.nome_completo.trim(),
+        document_type:   c.document_type,
+        document_number: c.document_number.trim().toUpperCase(),
+        citizenship:     c.nazionalita.trim(),
+        companion_type:  "ospite",
+      }));
+      const { error: cErr } = await supabase.from("guest_companions").insert(righe);
+      if (cErr) { setError("Errore nel salvataggio degli ospiti aggiuntivi. Riprova."); setSubmitting(false); return; }
+    }
 
     router.push(`/checkin/${id}/guida`);
   }
@@ -127,6 +175,13 @@ export default function CheckInPage({ params }: { params: Promise<{ id: string }
     display: "block", fontSize: 10, fontWeight: 600,
     letterSpacing: "0.1em", textTransform: "uppercase",
     color: c.cammello, marginBottom: 6, fontFamily: FONT,
+  };
+  const selectStyle = {
+    ...inp,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B7355' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat" as const,
+    backgroundPosition: "right 12px center",
+    paddingRight: 36,
   };
 
   // ── Loading ──────────────────────────────────────────────────
@@ -149,7 +204,7 @@ export default function CheckInPage({ params }: { params: Promise<{ id: string }
     </div>
   );
 
-  const nome   = propName(booking?.properties ?? null);
+  const nome      = propName(booking?.properties ?? null);
   const indirizzo = propAddress(booking?.properties ?? null);
 
   // ── Landing ──────────────────────────────────────────────────
@@ -247,7 +302,7 @@ export default function CheckInPage({ params }: { params: Promise<{ id: string }
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                   <div>
                     <label style={lbl}>Documento *</label>
-                    <select style={{ ...inp, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B7355' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36 }}
+                    <select style={selectStyle}
                       value={form.document_type} onChange={e => setForm(f => ({ ...f, document_type: e.target.value as DocType }))}>
                       <option>Carta d&apos;identità</option>
                       <option>Passaporto</option>
@@ -269,14 +324,59 @@ export default function CheckInPage({ params }: { params: Promise<{ id: string }
                   </div>
                   <div>
                     <label style={lbl}>N. ospiti</label>
-                    <select style={{ ...inp, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B7355' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36 }}
+                    <select style={selectStyle}
                       value={form.num_ospiti} onChange={e => setForm(f => ({ ...f, num_ospiti: e.target.value }))}>
-                      {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
+                      {[1, 2, 3].map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
                   </div>
                 </div>
 
               </div>
+
+              {/* ── Ospiti aggiuntivi ── */}
+              {compagni.map((compagno, idx) => (
+                <div key={idx} style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: `1px solid ${c.sabbia}` }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: c.cammello, margin: "0 0 1rem" }}>
+                    Ospite {idx + 2}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+                    <div>
+                      <label style={lbl}>Nome completo *</label>
+                      <input style={inp} type="text" placeholder="Mario Rossi"
+                        value={compagno.nome_completo}
+                        onChange={e => setCompagni(prev => prev.map((c, i) => i === idx ? { ...c, nome_completo: e.target.value } : c))} />
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                      <div>
+                        <label style={lbl}>Documento *</label>
+                        <select style={selectStyle}
+                          value={compagno.document_type}
+                          onChange={e => setCompagni(prev => prev.map((c, i) => i === idx ? { ...c, document_type: e.target.value as DocType } : c))}>
+                          <option>Carta d&apos;identità</option>
+                          <option>Passaporto</option>
+                          <option>Patente</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={lbl}>Numero doc. *</label>
+                        <input style={{ ...inp, textTransform: "uppercase" }} type="text" placeholder="CA000000"
+                          value={compagno.document_number}
+                          onChange={e => setCompagni(prev => prev.map((c, i) => i === idx ? { ...c, document_number: e.target.value.toUpperCase() } : c))} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={lbl}>Nazionalita</label>
+                      <input style={inp} type="text" placeholder="Italiana"
+                        value={compagno.nazionalita}
+                        onChange={e => setCompagni(prev => prev.map((c, i) => i === idx ? { ...c, nazionalita: e.target.value } : c))} />
+                    </div>
+
+                  </div>
+                </div>
+              ))}
 
               {error && (
                 <p style={{ color: "#a03030", fontSize: 13, marginTop: "1rem", textAlign: "center" }}>{error}</p>
