@@ -4,6 +4,23 @@ Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in ques
 
 ---
 
+## [Unreleased] — 2026-04-03 (aggiornamento 47 — Fix API guida + hero e card restyling)
+
+### Modificato
+- `app/api/guida/route.ts` — Try/catch dettagliato attorno alla chiamata Anthropic:
+  log `console.error` con section e messaggio, risposta `{ content: null, error: "..." }`
+  in caso di errore. Check esplicito su ANTHROPIC_API_KEY. Try/catch separato per Supabase.
+- `app/checkin/[id]/guida/GuidaClient.tsx`:
+  - Hero: altezza 380px, testo centrato verticalmente (non più bottom-left),
+    RS 36px bold, HOSPITALITY tracking 0.35em, titolo italic 32px, nome 16px
+  - 4 card info spostate su sfondo lino (fuori dal blocco tabacco),
+    background bianco, bordo sabbia, valori tabacco bold 16px, icone cammello, border-radius 12px
+  - Card Esplora: icona in box 40x40px sabbia border-radius 10px, titolo 16px bold,
+    chevron 18px strokeWidth 2.5, box-shadow 0 1px 3px rgba(0,0,0,0.08)
+  - `toggleSezione`: legge `json.error` dalla risposta API e lo mostra nel contenuto
+
+---
+
 ## [Unreleased] — 2026-04-03 (aggiornamento 46 — Guida ospite redesign completo)
 
 ### Modificato

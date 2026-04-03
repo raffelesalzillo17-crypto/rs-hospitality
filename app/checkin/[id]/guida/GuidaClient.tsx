@@ -58,9 +58,9 @@ function renderMarkdown(text: string) {
 
 // ── Icone SVG inline ─────────────────────────────────────────────────────────
 
-function IcoSole() {
+function IcoSole({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="5"/>
       <line x1="12" y1="1" x2="12" y2="3"/>
       <line x1="12" y1="21" x2="12" y2="23"/>
@@ -74,17 +74,17 @@ function IcoSole() {
   );
 }
 
-function IcoLuna() {
+function IcoLuna({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
   );
 }
 
-function IcoWifi() {
+function IcoWifi({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
       <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
       <path d="M10.09 17.1a6 6 0 0 1 3.82 0"/>
@@ -93,27 +93,27 @@ function IcoWifi() {
   );
 }
 
-function IcoPin() {
+function IcoPin({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
       <circle cx="12" cy="10" r="3"/>
     </svg>
   );
 }
 
-function IcoCasa() {
+function IcoCasa({ size = 20 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
       <polyline points="9 22 9 12 15 12 15 22"/>
     </svg>
   );
 }
 
-function IcoForchetta() {
+function IcoForchetta({ size = 20 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
       <path d="M7 2v20"/>
       <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
@@ -121,9 +121,9 @@ function IcoForchetta() {
   );
 }
 
-function IcoAuto() {
+function IcoAuto({ size = 20 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M19 17H5a2 2 0 0 1-2-2v-3l2.5-5h11l2.5 5v3a2 2 0 0 1-2 2z"/>
       <circle cx="7.5" cy="17" r="2"/>
       <circle cx="16.5" cy="17" r="2"/>
@@ -133,10 +133,23 @@ function IcoAuto() {
 
 function IcoChevron({ aperto }: { aperto: boolean }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
       style={{ transition: "transform 0.2s", transform: aperto ? "rotate(90deg)" : "none", flexShrink: 0 }}>
       <polyline points="9 18 15 12 9 6"/>
     </svg>
+  );
+}
+
+function IconaBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      width: 40, height: 40, flexShrink: 0,
+      background: c.sabbia, borderRadius: 10,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: c.cammello,
+    }}>
+      {children}
+    </div>
   );
 }
 
@@ -157,24 +170,26 @@ function Skeleton() {
 
 // ── Stili condivisi ──────────────────────────────────────────────────────────
 
-const cardStyle: React.CSSProperties = {
+const esploraCardStyle: React.CSSProperties = {
   background: "#fff",
   border: `1px solid ${c.sabbia}`,
   borderRadius: 12,
   overflow: "hidden",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
 };
 
-const cardBtnStyle: React.CSSProperties = {
+const esploraCardBtnStyle: React.CSSProperties = {
   width: "100%", padding: 16,
   display: "flex", alignItems: "center", gap: 12,
   border: "none", background: "transparent",
   cursor: "pointer", textAlign: "left", fontFamily: FONT,
 };
 
-const infoCardBase: React.CSSProperties = {
-  background: "rgba(212,201,181,0.15)",
-  borderRadius: 8,
-  padding: "14px 10px",
+const infoCardStyle: React.CSSProperties = {
+  background: "#fff",
+  border: `1px solid ${c.sabbia}`,
+  borderRadius: 12,
+  padding: 16,
   textAlign: "center",
 };
 
@@ -188,7 +203,7 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
   const [caricando,    setCaricando]    = useState<Record<string, boolean>>({});
   const [toastVisible, setToastVisible] = useState(false);
 
-  const mapsUrl  = `https://maps.google.com/?q=${encodeURIComponent(`${property.address ?? ""}, ${property.city ?? "Marcianise"}`)}`;
+  const mapsUrl   = `https://maps.google.com/?q=${encodeURIComponent(`${property.address ?? ""}, ${property.city ?? "Marcianise"}`)}`;
   const hasOnsite = !!(property.contact_onsite_name && property.contact_onsite_phone);
 
   function copiaWifi() {
@@ -208,9 +223,14 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
     try {
       const res  = await fetch(`/api/guida?section=${id}&property_id=${property.id}`);
       const json = await res.json();
-      setContenuti(prev => ({ ...prev, [id]: json.content ?? "Informazioni non disponibili." }));
-    } catch {
-      setContenuti(prev => ({ ...prev, [id]: "Impossibile caricare le informazioni. Riprova." }));
+      if (json.error) {
+        setContenuti(prev => ({ ...prev, [id]: `Errore: ${json.error}` }));
+      } else {
+        setContenuti(prev => ({ ...prev, [id]: json.content ?? "Informazioni non disponibili." }));
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setContenuti(prev => ({ ...prev, [id]: `Errore di rete: ${msg}` }));
     } finally {
       setCaricando(prev => ({ ...prev, [id]: false }));
     }
@@ -219,11 +239,9 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
   return (
     <div style={{ minHeight: "100vh", background: c.lino, fontFamily: FONT, overscrollBehavior: "none" }}>
 
-      {/* ══ SEZIONE 1 — Hero + 4 card ═══════════════════════════ */}
-      <div style={{ background: c.tabacco, paddingBottom: 16 }}>
-
-        {/* Foto con overlay */}
-        <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
+      {/* ══ SEZIONE 1 — Hero ════════════════════════════════════ */}
+      <div style={{ background: c.tabacco }}>
+        <div style={{ position: "relative", height: 380, overflow: "hidden" }}>
           <Image
             src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"
             alt={property.name}
@@ -231,52 +249,62 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
             style={{ objectFit: "cover" }}
             priority
           />
+          {/* Gradiente scuro */}
           <div style={{
             position: "absolute", inset: 0,
-            background: "linear-gradient(to bottom, transparent 25%, rgba(44,36,22,0.92) 100%)",
+            background: "linear-gradient(to bottom, rgba(44,36,22,0.35) 0%, rgba(44,36,22,0.6) 100%)",
           }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 20px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
-              <span style={{ fontSize: 18, fontWeight: 700, color: c.lino, letterSpacing: "-0.01em" }}>RS</span>
-              <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: c.cammello }}>Hospitality</span>
+          {/* Testo centrato */}
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            textAlign: "center", padding: "0 28px",
+          }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 20 }}>
+              <span style={{ fontSize: 36, fontWeight: 700, color: c.lino, letterSpacing: "-0.02em", lineHeight: 1 }}>RS</span>
+              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.35em", textTransform: "uppercase", color: c.cammello }}>HOSPITALITY</span>
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 300, fontStyle: "italic", color: c.lino, margin: "0 0 4px", lineHeight: 1.2, fontFamily: FONT }}>
+            <h1 style={{ fontSize: 32, fontWeight: 300, fontStyle: "italic", color: c.lino, margin: "0 0 10px", lineHeight: 1.2, fontFamily: FONT }}>
               Il tuo soggiorno
             </h1>
             {guestName && (
-              <p style={{ fontSize: 15, color: c.cammello, margin: 0, fontFamily: FONT }}>{guestName}</p>
+              <p style={{ fontSize: 16, color: c.cammello, margin: 0, fontFamily: FONT }}>{guestName}</p>
             )}
           </div>
         </div>
+      </div>
 
-        {/* 4 card info */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "16px 16px 0" }}>
+      {/* ══ 4 card info — sfondo lino ═══════════════════════════ */}
+      <div style={{ background: c.lino, padding: "16px 16px 0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
 
           {/* CHECK-IN */}
-          <div style={infoCardBase}>
-            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 6 }}><IcoSole /></div>
+          <div style={infoCardStyle}>
+            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 8 }}><IcoSole /></div>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: c.cammello, margin: "0 0 4px" }}>Check-in</p>
-            <p style={{ fontSize: 15, fontWeight: 600, color: c.lino, margin: "0 0 2px" }}>{fmt(booking.check_in)}</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: c.tabacco, margin: "0 0 2px" }}>{fmt(booking.check_in)}</p>
             <p style={{ fontSize: 11, color: c.cammello, margin: 0 }}>dalle {property.checkin_time ?? "15:00"}</p>
           </div>
 
           {/* CHECK-OUT */}
-          <div style={infoCardBase}>
-            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 6 }}><IcoLuna /></div>
+          <div style={infoCardStyle}>
+            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 8 }}><IcoLuna /></div>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: c.cammello, margin: "0 0 4px" }}>Check-out</p>
-            <p style={{ fontSize: 15, fontWeight: 600, color: c.lino, margin: "0 0 2px" }}>{fmt(booking.check_out)}</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: c.tabacco, margin: "0 0 2px" }}>{fmt(booking.check_out)}</p>
             <p style={{ fontSize: 11, color: c.cammello, margin: 0 }}>entro le {property.checkout_time ?? "11:00"}</p>
           </div>
 
           {/* WI-FI */}
           <button onClick={copiaWifi} style={{
-            ...infoCardBase,
-            border: "none", cursor: property.wifi_password ? "pointer" : "default", fontFamily: FONT,
-            width: "100%",
+            ...infoCardStyle,
+            border: `1px solid ${c.sabbia}`,
+            cursor: property.wifi_password ? "pointer" : "default",
+            fontFamily: FONT, width: "100%",
           }}>
-            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 6 }}><IcoWifi /></div>
+            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 8 }}><IcoWifi /></div>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: c.cammello, margin: "0 0 4px" }}>Wi-Fi</p>
-            <p style={{ fontSize: 13, fontWeight: 600, color: c.lino, margin: "0 0 2px", wordBreak: "break-all" }}>{property.wifi_name ?? "—"}</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: c.tabacco, margin: "0 0 2px", wordBreak: "break-all" }}>{property.wifi_name ?? "—"}</p>
             <p style={{ fontSize: 11, color: c.cammello, margin: 0 }}>
               {property.wifi_password ? "Tocca per copiare" : "—"}
             </p>
@@ -284,10 +312,10 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
 
           {/* NAVIGA */}
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-            style={{ ...infoCardBase, textDecoration: "none", display: "block" }}>
-            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 6 }}><IcoPin /></div>
+            style={{ ...infoCardStyle, textDecoration: "none", display: "block" }}>
+            <div style={{ color: c.cammello, display: "flex", justifyContent: "center", marginBottom: 8 }}><IcoPin /></div>
             <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: c.cammello, margin: "0 0 4px" }}>Naviga</p>
-            <p style={{ fontSize: 13, fontWeight: 600, color: c.lino, margin: "0 0 2px" }}>{property.address ?? "Via Clanio 60"}</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: c.tabacco, margin: "0 0 2px" }}>{property.address ?? "Via Clanio 60"}</p>
             <p style={{ fontSize: 11, color: c.cammello, margin: 0 }}>Apri in Maps</p>
           </a>
 
@@ -317,12 +345,12 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-          {/* Card 1 — Il tuo soggiorno (accordion statico) */}
-          <div style={cardStyle}>
-            <button onClick={() => toggleSezione("soggiorno")} style={cardBtnStyle}>
-              <div style={{ color: c.cammello, flexShrink: 0 }}><IcoCasa /></div>
+          {/* Card 1 — Il tuo soggiorno */}
+          <div style={esploraCardStyle}>
+            <button onClick={() => toggleSezione("soggiorno")} style={esploraCardBtnStyle}>
+              <IconaBox><IcoCasa /></IconaBox>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: "0 0 2px", fontFamily: FONT }}>Il tuo soggiorno</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: c.tabacco, margin: "0 0 3px", fontFamily: FONT }}>Il tuo soggiorno</p>
                 <p style={{ fontSize: 12, color: c.cammello, margin: 0, fontFamily: FONT }}>Istruzioni accesso, regole della casa, Wi-Fi</p>
               </div>
               <div style={{ color: c.cammello }}><IcoChevron aperto={aperto === "soggiorno"} /></div>
@@ -343,11 +371,11 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
           </div>
 
           {/* Card 2 — Dove mangiare */}
-          <div style={cardStyle}>
-            <button onClick={() => toggleSezione("mangiare")} style={cardBtnStyle}>
-              <div style={{ color: c.cammello, flexShrink: 0 }}><IcoForchetta /></div>
+          <div style={esploraCardStyle}>
+            <button onClick={() => toggleSezione("mangiare")} style={esploraCardBtnStyle}>
+              <IconaBox><IcoForchetta /></IconaBox>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: "0 0 2px", fontFamily: FONT }}>Dove mangiare</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: c.tabacco, margin: "0 0 3px", fontFamily: FONT }}>Dove mangiare</p>
                 <p style={{ fontSize: 12, color: c.cammello, margin: 0, fontFamily: FONT }}>Ristoranti e locali consigliati vicino a te</p>
               </div>
               <div style={{ color: c.cammello }}><IcoChevron aperto={aperto === "mangiare"} /></div>
@@ -362,11 +390,11 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
           </div>
 
           {/* Card 3 — Luoghi da vedere */}
-          <div style={cardStyle}>
-            <button onClick={() => toggleSezione("luoghi")} style={cardBtnStyle}>
-              <div style={{ color: c.cammello, flexShrink: 0 }}><IcoPin /></div>
+          <div style={esploraCardStyle}>
+            <button onClick={() => toggleSezione("luoghi")} style={esploraCardBtnStyle}>
+              <IconaBox><IcoPin size={20} /></IconaBox>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: "0 0 2px", fontFamily: FONT }}>Luoghi da vedere</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: c.tabacco, margin: "0 0 3px", fontFamily: FONT }}>Luoghi da vedere</p>
                 <p style={{ fontSize: 12, color: c.cammello, margin: 0, fontFamily: FONT }}>Attrazioni e mete imperdibili</p>
               </div>
               <div style={{ color: c.cammello }}><IcoChevron aperto={aperto === "luoghi"} /></div>
@@ -381,11 +409,11 @@ export default function GuidaClient({ data }: { data: GuidaData }) {
           </div>
 
           {/* Card 4 — Come muoversi */}
-          <div style={cardStyle}>
-            <button onClick={() => toggleSezione("muoversi")} style={cardBtnStyle}>
-              <div style={{ color: c.cammello, flexShrink: 0 }}><IcoAuto /></div>
+          <div style={esploraCardStyle}>
+            <button onClick={() => toggleSezione("muoversi")} style={esploraCardBtnStyle}>
+              <IconaBox><IcoAuto /></IconaBox>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: c.tabacco, margin: "0 0 2px", fontFamily: FONT }}>Come muoversi</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: c.tabacco, margin: "0 0 3px", fontFamily: FONT }}>Come muoversi</p>
                 <p style={{ fontSize: 12, color: c.cammello, margin: 0, fontFamily: FONT }}>Trasporti, taxi, parcheggi</p>
               </div>
               <div style={{ color: c.cammello }}><IcoChevron aperto={aperto === "muoversi"} /></div>
