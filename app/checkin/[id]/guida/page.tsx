@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@supabase/supabase-js";
+// TODO: migrazione in corso — sarà sostituito con Google Sheets
 import GuidaClient, { type GuidaData } from "./GuidaClient";
 
 export const metadata: Metadata = {
@@ -16,10 +16,8 @@ const c = {
 const FONT = "Helvetica Neue, Helvetica, Arial, sans-serif";
 
 async function getData(bookingId: string): Promise<GuidaData | null> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // TODO: migrazione in corso — sarà sostituito con Google Sheets
+  const supabase = null as any;
 
   const { data: booking } = await supabase
     .from("bookings")

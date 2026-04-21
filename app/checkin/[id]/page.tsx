@@ -2,12 +2,9 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// TODO: migrazione in corso — sarà sostituito con Google Sheets
+const supabase = null as any;
 
 const c = {
   tabacco:  "#2C2416",

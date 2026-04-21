@@ -1,6 +1,22 @@
 # Changelog
 
-Tutte le modifiche rilevanti al progetto RS Hospitality sono documentate in questo file.
+Tutte le modifiche rilevanti al progetto sono documentate in questo file.
+
+---
+
+## [Unreleased] — 2026-04-21 (refactor — migrazione a Salzillo Hospitality + rimozione Supabase)
+
+### Modificato
+- `package.json` — nome progetto rinominato `salzillo-hospitality`; rimossi `@supabase/ssr` e `@supabase/supabase-js`
+- `README.md` — aggiornato con nuovo nome e stack Google Sheets
+- `.env.local` — rimosse variabili `NEXT_PUBLIC_SUPABASE_*`; aggiunti placeholder `GOOGLE_CLIENT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_SHEETS_ID`, `GOOGLE_CALENDAR_ID`
+- `middleware.ts` — rimossa logica auth Supabase; ora passthrough puro
+- `lib/supabase.ts`, `lib/supabase-browser.ts`, `lib/supabase-server.ts` — sostituiti con stub `null as any` in attesa di integrazione Google Sheets
+- `app/checkin/[id]/page.tsx` — rimosso import diretto `@supabase/supabase-js`; stub locale
+- `app/checkin/[id]/guida/page.tsx` — rimosso import diretto `@supabase/supabase-js`; stub locale
+
+### Eliminato
+- `supabase/` — intera cartella rimossa (5 file di migrazione SQL)
 
 ---
 
